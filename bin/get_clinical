@@ -6,11 +6,13 @@ create a column with the correct position order
 create ans save dictionary of gene names and their order
 create ans save dictionary of gene names and their chr
 """
-import os, sys
+import os
+import sys
 import plac
 from omics_processing.io import get_clinical
 import logging
 dirname = os.path.dirname(__file__)
+
 
 @plac.annotations(
     filepath=plac.Annotation(
@@ -49,9 +51,10 @@ def main(
     # gleason_score_col="gleason_score",
     # gleason_primary_col="gleason_pattern_primary",
     # gleason_secondary_col="gleason_pattern_secondary",
-    filepath=os.path.join(dirname,"../data/input",
-        "gdac.broadinstitute.org_PRAD.Merge_Clinical.Level_1.2016012800.0.0",
-        "PRAD.clin.merged.txt"),
+    filepath=os.path.join(dirname, "../data/input",
+                          "gdac.broadinstitute.org_PRAD." +
+                          "Merge_Clinical.Level_1.2016012800.0.0",
+                          "PRAD.clin.merged.txt"),
     outdir="../data/processed/",
     key_col="patient.bcr_patient_barcode",
     gleason_cols="patient.stage_event.gleason_grading.gleason_score," +

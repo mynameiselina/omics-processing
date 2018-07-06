@@ -37,8 +37,12 @@ def get_clinical(fpath, datadir_out,
 
     gleason_cols = kwargs.pop('gleason_cols', None)
     if gleason_cols is not None:
-        if (('score' not in gleason_cols) or ('primary' not in gleason_cols) or ('secondary' not in gleason_cols)):
-            logger.exception('Invalid gleason columns to compute the gleason score', gleason_cols)
+        if (('score' not in gleason_cols) or
+                ('primary' not in gleason_cols) or
+                ('secondary' not in gleason_cols)):
+            logger.exception(
+                'Invalid gleason columns to compute the gleason score',
+                gleason_cols)
             raise
         split_gleason_cols = gleason_cols.rsplit(',')
         select_columns.extend(split_gleason_cols)
@@ -72,7 +76,7 @@ def get_clinical(fpath, datadir_out,
         # create grade group column
         clinical_small['grade_group'] = -9999
         clinical_small.loc[score <= 6, 'grade_group'] = 1
-        clinical_small.loc[(primary == 3) & (secondary == 4), 
+        clinical_small.loc[(primary == 3) & (secondary == 4),
                            'grade_group'] = 2
         clinical_small.loc[(primary == 4) & (secondary == 3),
                            'grade_group'] = 3
@@ -103,7 +107,7 @@ def get_clinical(fpath, datadir_out,
     #     json.dump(patient_order, fp, indent=4)
     # logger.info('saved: '+fpath_out+'.json')
 
-    return clinical_small  #, patient_order
+    return clinical_small   # , patient_order
 
 
 # RUN JUST ONE TIME
@@ -149,8 +153,8 @@ def get_gaf(fpath, datadir_out):
     gaf_posMerged = gaf_small.copy()  # need to create a copy and not view here
     init = gaf_posMerged.shape
     logger.info('initial gaf size '+str(init))
-    logger.info(' -duplicates exist : '+str(not(gaf_small.gene.value_counts() == 1
-                                          ).all()))
+    logger.info(' -duplicates exist : ' +
+                str(not(gaf_small.gene.value_counts() == 1).all()))
     # VIEW of all duplicates
     gaf_dupl = gaf_posMerged[gaf_posMerged['gene_chr'].duplicated()]
     tmp = gaf_posMerged[gaf_posMerged['gene_chr'].duplicated()].shape
@@ -159,9 +163,9 @@ def get_gaf(fpath, datadir_out):
     gaf_posMerged.drop_duplicates(['gene_chr'], inplace=True)
     logger.info('gaf size without duplicates '+str(gaf_posMerged.shape))
     logger.info(' -successfully removed duplicates: ' +
-          str((gaf_posMerged.gene.value_counts() == 1).all()))
+                str((gaf_posMerged.gene.value_counts() == 1).all()))
     logger.info(' -numbers match: ' +
-          str((init[0] - gaf_posMerged.shape[0]) == tmp[0]))
+                str((init[0] - gaf_posMerged.shape[0]) == tmp[0]))
     gaf_posMerged.reset_index(drop=True, inplace=True)
 
     # save min start and max end from all duplicated gene_chr entries
