@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+"""
+get the gaf file from TCGA for the gene positions
+sort GAF by pos (chr and start-end) and save as csv
+create a column with the correct position order
+create ans save dictionary of gene names and their order
+create ans save dictionary of gene names and their chr
+"""
+import plac
+from omics_processing.io import get_gaf
+
+
+@plac.annotations(
+    filepath=plac.Annotation(
+        'File path where the gaf will be stored.',
+        type=str
+    ),
+    outdir=plac.Annotation(
+        'Folder where the output will be saved.',
+        type=str
+    )
+)
+def main(
+    filepath="data/input/nationwidechildrens.org_clinical_patient_prad.txt",
+    outdir="data/processed/"
+):
+    """ Get GAF file"""
+    _ = get_gaf(filepath, outdir)
+
+
+if __name__ == '__main__':
+    plac.call(main)
