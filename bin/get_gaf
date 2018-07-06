@@ -21,7 +21,7 @@ from omics_processing.io import get_gaf
     )
 )
 def main(
-    filepath="../data/input/nationwidechildrens.org_clinical_patient_prad.txt",
+    filepath="../data/input/gene.genome.v4_0.processed.gaf",
     outdir="../data/processed/"
 ):
     """ Get GAF file"""

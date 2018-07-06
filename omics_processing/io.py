@@ -113,30 +113,26 @@ def get_clinical(fpath, datadir_out,
 # RUN JUST ONE TIME
 def get_gaf(fpath, datadir_out):
 
-    # define dirs
-    # maindir = '/home/ubuntu/my-git-repos/netDL/'
-    # datadir = maindir+'DATA/TCGA_fromMatteo/all_processed/'
-    # datadir_out = maindir+'DATA/TCGA_fromMatteo/all_processed/formatted/'
-
     # load GAF
-    # fname = 'gene.genome.v4_0.processed.gaf'
     gaf = pd.read_csv(fpath, delimiter='\t', header=None)
 
     # save some columns of GAF and create new ones
     gaf_small = gaf.iloc[:, [1, 16]].copy()
 
-    gaf_small['gene'] = [item.rsplit('|')[0]
-                         for item in gaf_small.iloc[:, 0]]
-    gaf_small['ensemble'] = [item.rsplit('|')[1]
-                             for item in gaf_small.iloc[:, 0]]
-    gaf_small['chr'] = [item.rsplit(':')[0].rsplit('chr')[1]
-                        for item in gaf_small[16]]
-    gaf_small['start'] = [int(item.rsplit(':')[1].rsplit('-')[0])
-                          for item in gaf_small[16]]
-    gaf_small['end'] = [item.rsplit(':')[1].rsplit('-')[1]
-                        for item in gaf_small[16]]
-    gaf_small['sign'] = [item.rsplit(':')[2] for item in gaf_small[16]]
-    gaf_small['gene_chr'] = gaf_small['gene']+'_'+gaf_small['chr']
+    gaf_small.loc[:, 'gene'] = [item.rsplit('|')[0]
+                                for item in gaf_small.iloc[:, 0]]
+    gaf_small.loc[:, 'ensemble'] = [item.rsplit('|')[1]
+                                    for item in gaf_small.iloc[:, 0]]
+    gaf_small.loc[:, 'chr'] = [item.rsplit(':')[0].rsplit('chr')[1]
+                               for item in gaf_small.iloc[:, 1]]
+    gaf_small.loc[:, 'start'] = [int(item.rsplit(':')[1].rsplit('-')[0])
+                                 for item in gaf_small.iloc[:, 1]]
+    gaf_small.loc[:, 'end'] = [item.rsplit(':')[1].rsplit('-')[1]
+                               for item in gaf_small.iloc[:, 1]]
+    gaf_small.loc[:, 'sign'] = [item.rsplit(':')[2]
+                                for item in gaf_small.iloc[:, 1]]
+    gaf_small.loc[:, 'gene_chr'] = \
+        gaf_small.loc[:, 'gene']+'_'+gaf_small.loc[:, 'chr']
 
     # sort GAF by gene name - to deal with the duplicates
     gaf_small.sort_values(['gene_chr'], ascending=[1], inplace=True)
@@ -151,43 +147,44 @@ def get_gaf(fpath, datadir_out):
     # of the duplicates keep only one copy
     # and save the min start pos and the max end pos
     gaf_posMerged = gaf_small.copy()  # need to create a copy and not view here
-    init = gaf_posMerged.shape
-    logger.info('initial gaf size '+str(init))
+    size = gaf_posMerged.shape
+    logger.info('initial gaf size '+str(size))
     logger.info(' -duplicates exist : ' +
                 str(not(gaf_small.gene.value_counts() == 1).all()))
     # VIEW of all duplicates
-    gaf_dupl = gaf_posMerged[gaf_posMerged['gene_chr'].duplicated()]
-    tmp = gaf_posMerged[gaf_posMerged['gene_chr'].duplicated()].shape
-    logger.info(' -number of all duplicates '+str(tmp))
+    gaf_dupl = gaf_posMerged[gaf_posMerged['gene_chr'].duplicated()].copy()
+    tmp_size = gaf_dupl.shape
+    logger.info(' -number of all duplicates '+str(tmp_size))
+
     # keep only the first duplicate and drop the rest
     gaf_posMerged.drop_duplicates(['gene_chr'], inplace=True)
     logger.info('gaf size without duplicates '+str(gaf_posMerged.shape))
     logger.info(' -successfully removed duplicates: ' +
                 str((gaf_posMerged.gene.value_counts() == 1).all()))
     logger.info(' -numbers match: ' +
-                str((init[0] - gaf_posMerged.shape[0]) == tmp[0]))
+                str((size[0] - gaf_posMerged.shape[0]) == tmp_size[0]))
     gaf_posMerged.reset_index(drop=True, inplace=True)
 
     # save min start and max end from all duplicated gene_chr entries
     _dupl_genes = gaf_small[gaf_small.gene.duplicated(keep=False)]
-    gaf_dupl.start = _dupl_genes.groupby(['gene_chr'], sort=False
-                                         )['start'].min().values
-    gaf_dupl.end = _dupl_genes.groupby(['gene_chr'], sort=False
-                                       )['end'].max().values
+    gaf_dupl.loc[:, 'start'] = _dupl_genes.groupby(['gene_chr'], sort=False
+                                                   )['start'].min().values
+    gaf_dupl.loc[:, 'end'] = _dupl_genes.groupby(['gene_chr'], sort=False
+                                                 )['end'].max().values
     logger.info(' -updated with the merged start and end positions')
 
     # sort GAF by pos (chr and start-end)
 
     gaf_posMerged.sort_values(['start', 'end'], ascending=[1, 1], inplace=True)
     chr_order = index_natsorted(gaf_posMerged.chr.values)
-    gaf_posMerged = gaf_posMerged.iloc[chr_order, :]
+    gaf_posMerged = gaf_posMerged.iloc[chr_order, :].copy()
     gaf_posMerged.reset_index(drop=True, inplace=True)
 
     # create a column with the correct position order
-    gaf_posMerged['pos_order'] = range(gaf_posMerged.shape[0])
+    gaf_posMerged.loc[:, 'pos_order'] = range(gaf_posMerged.shape[0])
 
     # create dictionary of gene names and their order
-    gene_order = dict((gaf_posMerged.gene[i], gaf_posMerged.pos_order[i])
+    gene_order = dict((gaf_posMerged.gene[i], int(gaf_posMerged.pos_order[i]))
                       for i in range(gaf_posMerged.shape[0]))
 
     # create dictionary of gene names and their chr
