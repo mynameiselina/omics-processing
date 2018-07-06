@@ -6,28 +6,71 @@ create a column with the correct position order
 create ans save dictionary of gene names and their order
 create ans save dictionary of gene names and their chr
 """
-import os
-print(os.getcwd())
+import os, sys
 import plac
 from omics_processing.io import get_clinical
-
+import logging
+dirname = os.path.dirname(__file__)
 
 @plac.annotations(
     filepath=plac.Annotation(
         'File path where the gaf will be stored.',
-        type=str
+        'option', 'f', str
     ),
     outdir=plac.Annotation(
         'Folder where the output will be saved.',
-        type=str
+        'option', 'o', str
+    ),
+    key_col=plac.Annotation(
+        'Select key column from clinical data table'
+        'this column will be used as index.',
+        'option', 'k', str
+    ),
+    gleason_cols=plac.Annotation(
+        'Select gleason columns from clinical data table.'
+        'score, primary and secondary pattern'
+        '(in order to create the Gleason grade group)',
+        'option', 'g', str
+    ),
+    other_cols=plac.Annotation(
+        'Select extra columns from clinical data table.'
+        '(seperate the strings with comma)',
+        'option', 'c', str
+    ),
+    DEBUG=plac.Annotation(
+        'Set True if you want to DEBUG the code.',
+        'option', 'd', bool
     )
 )
 def main(
-    filepath="data/input/nationwidechildrens.org_clinical_patient_prad.txt",
-    outdir="data/processed/"
+    # filepath="../data/input/nationwidechildrens.org_clinical_patient_prad.txt",
+    # outdir="../data/processed/",
+    # key_col="bcr_patient_barcode",
+    # gleason_score_col="gleason_score",
+    # gleason_primary_col="gleason_pattern_primary",
+    # gleason_secondary_col="gleason_pattern_secondary",
+    filepath=os.path.join(dirname,"../data/input",
+        "gdac.broadinstitute.org_PRAD.Merge_Clinical.Level_1.2016012800.0.0",
+        "PRAD.clin.merged.txt"),
+    outdir="../data/processed/",
+    key_col="patient.bcr_patient_barcode",
+    gleason_cols="patient.stage_event.gleason_grading.gleason_score," +
+                 "patient.stage_event.gleason_grading.primary_pattern," +
+                 "patient.stage_event.gleason_grading.secondary_pattern",
+    other_cols=None,
+    DEBUG=True
 ):
+    if DEBUG:
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+
+    kwargs = {'gleason_cols': gleason_cols,
+              'other_cols': other_cols,
+              }
+
     """ Get GAF file"""
-    _ = get_clinical(filepath, outdir)
+    _ = get_clinical(filepath, outdir,
+                     key_col,
+                     **kwargs)
 
 
 if __name__ == '__main__':
