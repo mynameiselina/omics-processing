@@ -121,22 +121,20 @@ class develop(_develop):
 
 
 scripts = [
-    'bin/generate_classification_csv',
-    'bin/tensorflow_hub_png_encoding',
-    'bin/train_sampled_weak_learner'
+    'bin/get_gaf',
+    'bin/get_clinical'
 ]
 
 setup(
-    name='tlcwnl',
+    name='omics_processing',
     version='0.1',
     description=(
-        'Transfer Learning through '
-        'Consensus of Weak Neural Learners'
+        'transforming omic data to normality'
     ),
     long_description=open('README.md').read(),
-    url='https://github.ibm.com/SysBio/tlcwnl',
-    author='Matteo Manica, Matthew Pediaditis, Joris Cadow',
-    author_email='tte@zurich.ibm.com, aed@zurich.ibm.com, dow.zurich.ibm.com',
+    url='https://github.ibm.com/LLE/omics_processing',
+    author='Elina Koletou',
+    author_email='lle@zurich.ibm.com',
     packages=find_packages('.'),
     cmdclass={
         'bdist_egg': bdist_egg,

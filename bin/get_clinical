@@ -9,7 +9,7 @@ create ans save dictionary of gene names and their chr
 import os
 print(os.getcwd())
 import plac
-from ..omics_processing.io import get_clinical
+from omics_processing.io import get_clinical
 
 
 @plac.annotations(
