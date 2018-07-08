@@ -11,7 +11,7 @@ import sys
 import plac
 from omics_processing.io import get_clinical
 import logging
-dirname = os.path.dirname(__file__)
+script_path = os.path.dirname(__file__)
 
 
 @plac.annotations(
@@ -51,11 +51,11 @@ def main(
     # gleason_score_col="gleason_score",
     # gleason_primary_col="gleason_pattern_primary",
     # gleason_secondary_col="gleason_pattern_secondary",
-    filepath=os.path.join(dirname, "../data/input",
+    filepath=os.path.join(script_path, "..", "data", "input",
                           "gdac.broadinstitute.org_PRAD." +
                           "Merge_Clinical.Level_1.2016012800.0.0",
                           "PRAD.clin.merged.txt"),
-    outdir="../data/processed/",
+    outdir=os.path.join(script_path, "..", "data", "processed"),
     key_col="patient.bcr_patient_barcode",
     gleason_cols="patient.stage_event.gleason_grading.gleason_score," +
                  "patient.stage_event.gleason_grading.primary_pattern," +
@@ -63,6 +63,7 @@ def main(
     other_cols=None,
     DEBUG=True
 ):
+    print(outdir)
     if DEBUG:
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 

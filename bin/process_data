@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""
+get the gaf file from TCGA for the gene positions
+sort GAF by pos (chr and start-end) and save as csv
+create a column with the correct position order
+create ans save dictionary of gene names and their order
+create ans save dictionary of gene names and their chr
+"""
+import plac
+from omics_processing.process_data import (
+    prepare_data, split_data, transform_data, sort_data
+)
+
+
+@plac.annotations(
+    filepath=plac.Annotation(
+        'File path where the gaf will be stored.',
+        type=str
+    ),
+    outdir=plac.Annotation(
+        'Folder where the output will be saved.',
+        type=str
+    )
+)
+def main(
+    filepath=os.path.join(script_path, "..", "data", "input",
+                          "gistic-cn-processed.tsv"),
+    outdir=os.path.join(script_path, "..", "data", "processed"),
+    data_type='cnv',
+    sample_type=None,
+    split_train_size=100,
+    split_random_state=0,
+    to_arcsinh=False,
+    to_stand=True,
+    to_sort_columns=True,
+    gene_dict_fpath=os.path.join(script_path, "..", "data",
+                                 "processed", "gaf.json"),
+    to_sort_rows=True,
+    sort_patients_by="grade_group",
+    stratify_patients_by="grade_group",
+    clinical_fpath=os.path.join(script_path, "..", "data",
+                                "processed", "clinical.txt"),
+    output_directory=os.path.join(script_path, "..", "data", "processed"),
+    output_filename=None
+):
+    sort_patients_by = sort_patients_by.rsplit(',')
+    kwargs = {}
+    kwargs['data_type'] = data_type
+    kwargs['sample_type'] = sample_type
+    kwargs['split_train_size'] = split_train_size
+    kwargs['split_random_state'] = split_random_state
+    kwargs['to_arcsinh'] = to_arcsinh
+    kwargs['to_stand'] = to_stand
+    kwargs['to_sort_columns'] = to_sort_columns
+    kwargs['gene_dict'] = load_gene_order_dict(gene_dict_fpath)
+    kwargs['to_sort_rows'] = to_sort_rows
+    kwargs['sort_patients_by'] = sort_patients_by
+    kwargs['stratify_patients_by'] = stratify_patients_by
+    kwargs['clinical'] = load_clinical(clinical_fpath)
+
+    if output_filename is None:
+        output_filename = ''
+
+    # prepare_data, split_data, transform_data, sort_data
+    data = prepare_data(filepath, **kwargs)
+    output_filename = output_filename+kwargs['data_type']
+    if kwargs['sample_type'] is not None:
+        output_filename = output_filename+'_'+sample_type
+
+    if split_train_size is not None:
+        data_list = split_data(data, **kwargs)
+        if kwargs['train_size'] < 1:
+            splitname = '_split_size'+str(int(kwargs['train_size']*100)) + \
+                'perc_seed'+str(kwargs['split_random_state'])
+        else:
+            splitname = '_split'+str(kwargs['train_size']) + \
+                '_seed'+str(kwargs['split_random_state'])
+        output_filename = output_filename+'_'+splitname
+        fname_list = [output_filename+'_part1', output_filename+'_part2']
+    else:
+        data_list = [data]
+        fname_list = [output_filename]
+
+    for _data, _fname in zip(data_list, fname_list):
+        _data = transform_data(_data, **kwargs)
+
+        if to_sort_columns or to_sort_rows:
+            _data = sort_data(_data, **kwargs)
+
+        kwargs['output_filename'] = _fname
+        save_output(_data, **kwargs)
+
+
+if __name__ == '__main__':
+    plac.call(main)

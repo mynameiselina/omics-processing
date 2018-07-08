@@ -40,7 +40,7 @@ def get_clinical(fpath, datadir_out,
         if (('score' not in gleason_cols) or
                 ('primary' not in gleason_cols) or
                 ('secondary' not in gleason_cols)):
-            logger.exception(
+            logger.error(
                 'Invalid gleason columns to compute the gleason score',
                 gleason_cols)
             raise
@@ -206,3 +206,46 @@ def get_gaf(fpath, datadir_out):
     logger.info('saved: '+fpath_out+'_chr.json')
 
     return gaf_posMerged, gene_order, gene_chr
+
+
+# load the processed gaf file with the genes positions
+def load_gene_positions(fpath):
+    # gaf file with gene positions
+    if not os.path.exists(fpath):
+        return None
+    else:
+        logger.info('Load gaf file: '+fpath)
+        genes_positions_table = pd.read_csv(fpath, sep='\t',
+                                            index_col=0, header=0)
+        genes_positions_table = genes_positions_table[['gene', 'chr']]
+        genes_positions_table.columns = ['id', 'chr']
+
+        genes_positions_table['chr_int'] = genes_positions_table['chr']
+        di = {"X": 23, "Y": 24, "M": 25}
+        genes_positions_table = genes_positions_table.replace({"chr_int": di})
+        genes_positions_table['chr_int'] = \
+            genes_positions_table['chr_int'].astype(int)
+        genes_positions_table['id'] = genes_positions_table['id'].astype(str)
+
+        return genes_positions_table
+
+
+# load the gene order position
+def load_gene_order_dict(fpath):
+    # load gene dict
+    logger.info('Load gene dict file: '+fpath)
+    with open(fpath, 'r') as fp:
+        gene_dict = json.load(fp)
+
+    return gene_dict
+
+
+# load the clinical data from the patients cohort
+def load_clinical(fpath):
+    # load clinical to get patient labels on the grade group
+    logger.info('Load clinical file: '+fpath)
+    clinical = pd.read_csv(fpath, delimiter='\t', header=0, index_col=0)
+    # clinical.set_index(['bcr_patient_barcode'], inplace=True, drop = True)
+    # clinical = clinical.loc[data.index]
+
+    return clinical

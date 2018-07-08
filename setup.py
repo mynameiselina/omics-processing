@@ -122,7 +122,8 @@ class develop(_develop):
 
 scripts = [
     'bin/get_gaf',
-    'bin/get_clinical'
+    'bin/get_clinical',
+    'bin/process_data'
 ]
 
 setup(
