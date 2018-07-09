@@ -17,31 +17,31 @@ script_path = os.path.dirname(__file__)
 @plac.annotations(
     filepath=plac.Annotation(
         'File path where the gaf will be stored.',
-        'option', 'f', str
+        type=str
     ),
     outdir=plac.Annotation(
         'Folder where the output will be saved.',
-        'option', 'o', str
+        'option', type=str
     ),
     key_col=plac.Annotation(
         'Select key column from clinical data table'
         'this column will be used as index.',
-        'option', 'k', str
+        'option', type=str
     ),
     gleason_cols=plac.Annotation(
         'Select gleason columns from clinical data table.'
         'score, primary and secondary pattern'
         '(in order to create the Gleason grade group)',
-        'option', 'g', str
+        'option', type=str
     ),
     other_cols=plac.Annotation(
         'Select extra columns from clinical data table.'
         '(seperate the strings with comma)',
-        'option', 'c', str
+        'option', type=str
     ),
     DEBUG=plac.Annotation(
         'Set True if you want to DEBUG the code.',
-        'option', 'd', bool
+        'option', 'D', bool
     )
 )
 def main(

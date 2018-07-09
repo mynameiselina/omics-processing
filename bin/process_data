@@ -17,22 +17,98 @@ from omics_processing.process_data import (
     load_data, split_data, clean_samples, clean_genes,
     transform_data, sort_data, save_output
 )
+from omics_processing.remove_duplicates import remove_andSave_duplicates
 
 script_path = os.path.dirname(__file__)
 
 
 @plac.annotations(
     filepath=plac.Annotation(
-        'File path where the gaf will be stored.',
+        "File path of the data.",
         type=str
     ),
-    outdir=plac.Annotation(
-        'Folder where the output will be saved.',
-        type=str
+    data_type=plac.Annotation(
+        "Data type. Defaults to 'cnv'",
+        'option', type=str
+    ),
+    sample_type=plac.Annotation(
+        "Sample type to chose if multiple exist. Defaults to 'tumor'",
+        'option', type=str
+    ),
+    split_train_size=plac.Annotation(
+        "Train size to split data, do not split if None. Defaults to None",
+        'option', type=float
+    ),
+    split_random_state=plac.Annotation(
+        "Random seed to split data (for reproducibility). Defaults to 0",
+        'option', type=int
+    ),
+    stratify_patients_by=plac.Annotation(
+        "Choose column from clinical data with classes "
+        "to stratify samples for balanced splitting.\n"
+        "'split_train_size' should be >= to the number of classes\n"
+        "(comma-separate names for choosing multiple columns)"
+        "Defaults to 'grade_group'",
+        'option', type=str
+    ),
+    to_arcsinh=plac.Annotation(
+        "Archsinh transform data before standardization. Defaults to False",
+        'option', 'arcsinh'
+    ),
+    to_stand=plac.Annotation(
+        "Choose to standardize the data. Defaults to True",
+        'option', 'stand', bool
+    ),
+    to_sort_columns=plac.Annotation(
+        "Sort genes (columns) according to chromosome position. "
+        "Defaults to True",
+        'option', 'sort_cols', bool
+    ),
+    gene_dict_fpath=plac.Annotation(
+        "Set the file path of the gene dictionary (json) to sort genes. "
+        "Defaults to 'data/processed/gaf.json'",
+        'option', type=str
+    ),
+    to_sort_rows=plac.Annotation(
+        "Sort samples (rows). Defaults to True",
+        'option', 'sort_rows', bool
+    ),
+    sort_patients_by=plac.Annotation(
+        "Choose column from clinical data to sort samples. "
+        "(comma-separate names for choosing multiple columns)"
+        "Defaults to 'grade_group'",
+        'option', type=str
+    ),
+    clinical_fpath=plac.Annotation(
+        "Set the file path of the clinical data to sort samples. "
+        "Defaults to 'data/processed/clinical.txt'",
+        'option', type=str
+    ),
+    to_remove_duplicate_columns=plac.Annotation(
+        "Choose to remove the duplicate columns. Defaults to True",
+        'option', 'remove_dupl_cols', bool
+    ),
+    to_compute_euclidean_distances=plac.Annotation(
+        "Choose to compute the pairwise euclidean distances "
+        "between the columns. Defaults to True",
+        'option', 'pdist_eucl', bool
+    ),
+    to_save_euclidean_distances=plac.Annotation(
+        "Choose to save the pairwise euclidean distances "
+        "between the columns. Defaults to True",
+        'option', 'save_pdist', bool
+    ),
+    output_directory=plac.Annotation(
+        "Set the path of the output directory. Defaults to 'data/processed/'",
+        'option', type=str
+    ),
+    output_filename=plac.Annotation(
+        "Set a prefix for the output filename. Defaults to None",
+        'option', type=str
     ),
     DEBUG=plac.Annotation(
         'Set True if you want to DEBUG the code.',
-        'option', 'd', bool
+        'option', 'D', bool
     )
 )
 def main(
@@ -41,8 +117,9 @@ def main(
     outdir=os.path.join(script_path, "..", "data", "processed"),
     data_type='cnv',
     sample_type=None,
-    split_train_size=100,
+    split_train_size=None,
     split_random_state=0,
+    stratify_patients_by="grade_group",
     to_arcsinh=False,
     to_stand=True,
     to_sort_columns=True,
@@ -50,10 +127,11 @@ def main(
                                  "processed", "gaf.json"),
     to_sort_rows=True,
     sort_patients_by="grade_group",
-    stratify_patients_by="grade_group",
     clinical_fpath=os.path.join(script_path, "..", "data",
                                 "processed", "clinical.txt"),
     to_remove_duplicate_columns=True,
+    to_compute_euclidean_distances=True,
+    to_save_euclidean_distances=True,
     output_directory=os.path.join(script_path, "..", "data", "processed"),
     output_filename=None,
     DEBUG=True
@@ -62,6 +140,7 @@ def main(
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     sort_patients_by = sort_patients_by.rsplit(',')
+    stratify_patients_by = stratify_patients_by.rsplit(',')
     kwargs = {}
     kwargs['data_type'] = data_type
     kwargs['split_train_size'] = split_train_size
@@ -82,7 +161,12 @@ def main(
     data = load_data(filepath, **kwargs)
     output_filename = output_filename+kwargs['data_type']
 
+    kwargs['sample_type'] = sample_type
     data = clean_samples(data, **kwargs)
+    # in case multiple sample types exist,
+    # the 'sample_type' will change inside clean_data()
+    if kwargs['sample_type'] is not None:
+        output_filename = output_filename+'_'+kwargs['sample_type']
 
     if split_train_size is not None:
         kwargs['stratify_by'] = \
@@ -103,12 +187,8 @@ def main(
         fname_list = [output_filename]
 
     for _data, _fname in zip(data_list, fname_list):
-        kwargs['sample_type'] = sample_type
+
         _data = clean_genes(_data)
-        # in case multiple sample types exist,
-        # the 'sample_type' will change inside clean_data()
-        if kwargs['sample_type'] is not None:
-            output_filename = output_filename+'_'+kwargs['sample_type']
 
         _data, transformation_settings = transform_data(_data, **kwargs)
         kwargs['transformation_settings'] = transformation_settings
@@ -116,11 +196,17 @@ def main(
         if to_sort_columns or to_sort_rows:
             _data = sort_data(_data, **kwargs)
 
-        kwargs['output_filename'] = _fname
+        kwargs['output_filename'] = _fname+'_processed'
         save_output(_data, **kwargs)
 
-        # if to_remove_duplicate_columns:
-        #     _data = remove_andSave_duplicates(_data, **kwargs)
+        if to_remove_duplicate_columns:
+            kwargs['load_from_file'] = False
+            kwargs['to_compute_euclidean_distances'] = \
+                to_compute_euclidean_distances
+            kwargs['to_save_euclidean_distances'] = \
+                to_save_euclidean_distances
+            kwargs['to_save_output'] = True
+            _ = remove_andSave_duplicates(_data, **kwargs)
 
 
 if __name__ == '__main__':

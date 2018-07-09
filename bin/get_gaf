@@ -17,11 +17,11 @@ from omics_processing.io import get_gaf
     ),
     outdir=plac.Annotation(
         'Folder where the output will be saved.',
-        type=str
+        'option', type=str
     ),
     DEBUG=plac.Annotation(
         'Set True if you want to DEBUG the code.',
-        'option', 'd', bool
+        'option', 'D', bool
     )
 )
 def main(

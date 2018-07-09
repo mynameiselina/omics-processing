@@ -15,49 +15,50 @@ logger = logging.getLogger(__name__)
 
 # compute euclidean pairwise distances between genes
 # (in order to remove duplicates later)
-def compute_euclidean_distances(data, data_name, datadir):
+def _compute_euclidean_distances(data, euclidean_distances_fpath,
+                                 to_save_euclidean_distances):
 
     mydata = data.values.T.copy()
 
     orphanrows = np.where(abs(mydata).sum(axis=1) == 0)[0]
     if (len(orphanrows) > 0):
-        logger.info('WARNING: cannot calculate correlation with zero vectors')
+        logger.warning('cannot calculate correlation with zero columns!')
         num_string = str(np.sort(np.unique(abs(mydata.flatten())))[1])
         if '.' in num_string:
             dec = len(num_string.rsplit('.')[1].rsplit('0'))
         min_val = float('{:.{prec}f}'.format(0, prec=dec+1)+'1')
-        logger.info('  -> replacing zero vectors with value: '+str(min_val))
+        logger.info('replace zero vectors with value: '+str(min_val))
         mydata[orphanrows, :] = mydata[orphanrows, :] + min_val
 
-    logger.info(' -computing genes euclidean distances...')
+    logger.info('computing genes euclidean distances...')
     start_time = timeit.default_timer()
     euclidean_distances_condensed = pdist(mydata, 'euclidean')
-    logger.info('  >time: '+str(timeit.default_timer() - start_time))
+    logger.info('>time: '+str(timeit.default_timer() - start_time))
 
-    # save so you don't have to compute again next time
-    fpath = datadir+data_name+'__genes_pdistEucl.h5'
-    with h5py.File(fpath, 'w') as hf:
-        hf.create_dataset('euclidean_distances_condensed',
-                          data=euclidean_distances_condensed)
-    logger.info(' -saved genes euclidean distances: '+fpath)
+    if to_save_euclidean_distances:
+        # save so you don't have to compute again next time
+        with h5py.File(euclidean_distances_fpath, 'w') as hf:
+            hf.create_dataset('euclidean_distances_condensed',
+                              data=euclidean_distances_condensed)
+        logger.info('save genes euclidean distances in: ' +
+                    euclidean_distances_fpath)
 
     return euclidean_distances_condensed
 
 
-def load_euclidean_distances(data_name, datadir):
-
-    fpath = os.path.join(datadir, data_name+'__genes_pdistEucl.h5')
+def _load_euclidean_distances(data_name, euclidean_distances_fpath):
 
     if os.path.exists(fpath):
         # exists
-        with h5py.File(fpath, 'r') as hf:
+        with h5py.File(euclidean_distances_fpath, 'r') as hf:
             logger.debug('List of arrays in this file: \n'+str(hf.keys()))
             dataset = hf.get('euclidean_distances_condensed')
             euclidean_distances_condensed = np.array(dataset)
             logger.debug('Shape of the condensed array: ' +
                          str(len(euclidean_distances_condensed)))
 
-        logger.info(' -loaded genes euclidean distances: '+fpath)
+        logger.info('loaded genes euclidean distances from: ' +
+                    euclidean_distances_fpath)
         return euclidean_distances_condensed
     else:
         # doesn't exist
@@ -65,8 +66,8 @@ def load_euclidean_distances(data_name, datadir):
         raise
 
 
-def get_duplicate_cols(data, euclidean_distances_condensed):
-    logger.info(' -finding duplicate genes...')
+def _get_duplicate_cols(data, euclidean_distances_condensed):
+    logger.info('finding duplicate genes...')
     # for every gene
     dupldict = {}
     uniqSet = set([])
@@ -93,90 +94,76 @@ def get_duplicate_cols(data, euclidean_distances_condensed):
     return dupldict, uniqSet, allduplSet
 
 
-def remove_duplicate_cols(data, dupldict, uniqSet, allduplSet):
+def _remove_duplicate_cols(data, dupldict, uniqSet, allduplSet):
+    logger.info('removing duplicate genes...')
     setdiff = allduplSet - set(dupldict.keys())
     newdata = data.drop(data[list(setdiff)], axis=1)
 
-    logger.info(' -data size w/ duplicates: '+str(data.shape))
-    logger.info(' -genes  w/o duplicates (unique): '+str(len(uniqSet)))
-    logger.info(' -all duplicates: '+str(len(allduplSet)))
-    logger.info(' -duplicated genes kept: '+str(len(dupldict.keys())))
-    logger.info(' -duplicated genes discarded: '+str(len(setdiff)))
-    logger.info(' -data size w/o duplicates: '+str(newdata.shape))
+    logger.info(' -data shape w/ duplicates: '+str(data.shape))
+    logger.info(' -number of genes w/o duplicates (unique): ' +
+                str(len(uniqSet)))
+    logger.info(' -all gene duplicates: '+str(len(allduplSet)))
+    logger.info(' -duplicated genes kept (the first by chr order): ' +
+                str(len(dupldict.keys())))
+    logger.info(' -duplicated genes discarded (the rest): '+str(len(setdiff)))
+    logger.info(' -data shape w/o duplicates: '+str(newdata.shape))
 
     return newdata
 
 
-def remove_andSave_duplicates(indata, indir, fromFile=True,
-                              toCompute_euclidean_distances=False,
-                              toSave=False, toPrint=False):
-    # load Mutations
-    if fromFile:
-        inName = indata
-        outdir = indir[:]
-        fpath = indir+inName
+def remove_andSave_duplicates(indata, **kwargs):
+    load_from_file = kwargs.get('load_from_file', False)
+    to_compute_euclidean_distances = \
+        kwargs.get('to_compute_euclidean_distances', True)
+    to_save_euclidean_distances = \
+        kwargs.get('to_save_euclidean_distances', False)
+    to_save_output = kwargs.get('to_save_output', True)
 
+    output_filename = kwargs.get('output_filename', False)
+    output_directory = kwargs.get('output_directory',
+                                  os.path.join(script_path, "..", "data",
+                                               "processed"))
+
+    euclidean_distances_fpath = os.path.join(output_directory,
+                                             output_filename +
+                                             '__genes_pdist_eucl.h5')
+    # load data
+    if load_from_file:
+        fpath = indata
         logger.info('Load data from file: '+fpath)
         data = pd.read_csv(fpath+'.txt', delimiter='\t', index_col=0)
     else:
-        inName = indir.rsplit('/')[-1]
-        outdir = indir.rstrip(inName)
-
-        logger.info('Load data')
+        logger.info('Load data from input.')
         data = indata.copy()
 
-    logger.info(' -size with duplicates: '+str(data.shape))
+    logger.info('size before checking for duplicate columns: '+str(data.shape))
 
-    if ('mut' in inName):
-        isMut = True
-    else:
-        isMut = False
-
-    # imgpath = outdir+'img/'
-    # if toSave:
-    #     imgpath = set_directory(imgpath)
-    # if toPlot:
-    #     genes_positions_table = load_gene_positions(datadir = outdir)
-    #     if data.min().min() < 0:
-    #         cmap = 'div'
-    #     else:
-    #         cmap = 'pos'
-    #     title='data before checking for duplicates - '
-    #     plot_dist_and_heatmap(data, genes_positions_table, title=title, isMut=isMut, cmap=cmap, saveimg = toSave, showimg = toPrint, imgpath = imgpath+inName+'_wDupl')
-    #     plt.close('all')
-
-    if toCompute_euclidean_distances:
+    if to_compute_euclidean_distances:
         euclidean_distances_condensed = \
-            compute_euclidean_distances(data, data_name=inName, datadir=outdir)
+            _compute_euclidean_distances(data, euclidean_distances_fpath,
+                                         to_save_euclidean_distances)
         # euclidean_distances = squareform(euclidean_distances_condensed )
     else:
         euclidean_distances_condensed = \
-            load_euclidean_distances(inName, datadir=outdir)
+            _load_euclidean_distances(euclidean_distances_fpath)
         # euclidean_distances = squareform(euclidean_distances_condensed)
 
     dupldict, uniqSet, allduplSet = \
-        get_duplicate_cols(data, euclidean_distances_condensed)
-    newdata = remove_duplicate_cols(data, dupldict, uniqSet, allduplSet)
+        _get_duplicate_cols(data, euclidean_distances_condensed)
+    newdata = _remove_duplicate_cols(data, dupldict, uniqSet, allduplSet)
 
-    # if toPlot:
-    #     if newdata.min().min() < 0:
-    #         cmap = 'div'
-    #     else:
-    #         cmap = 'pos'
-    #     title='data UNIQ columns - '
-    #     plot_dist_and_heatmap(newdata, genes_positions_table, title=title, isMut=isMut, cmap=cmap, saveimg = toSave, showimg = toPrint, imgpath = imgpath+inName+'_uniq')
-    #     plt.close('all')
-
-    if toSave:
+    if to_save_output:
         # saving data
-        fpath = outdir + inName + '__uniq'
-        logger.info('data and dictionary output will be saved in: '+fpath)
+        fpath = os.path.join(output_directory,
+                             output_filename +
+                             '__uniq')
+        logger.info('saving data and dictionary output...')
 
         newdata.to_csv(fpath+'.txt', sep='\t')  # data
-        logger.info(' -saved: '+fpath+'.txt')
+        logger.info('saved: '+fpath+'.txt')
 
         with open(fpath+'.json', 'w') as f:
             json.dump(dupldict, f, indent=4)   # dictionary
-        logger.info(' -saved: '+fpath+'.json')
+        logger.info('saved: '+fpath+'.json')
 
     return newdata, dupldict, uniqSet, allduplSet
