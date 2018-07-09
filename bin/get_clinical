@@ -63,7 +63,6 @@ def main(
     other_cols=None,
     DEBUG=True
 ):
-    print(outdir)
     if DEBUG:
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 

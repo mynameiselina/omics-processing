@@ -26,7 +26,8 @@ def _sort_patients(data, properties, sort_by=['grade_group']):
     return data_sorted, properties_sorted
 
 
-def _clean_samples(data, **kwargs):
+def clean_samples(data, **kwargs):
+    logger.info('clean samples: dupl, sample info, index')
     # check if we have more than one samples per patient
     barcode_all = [(sample, '-'.join(sample.rsplit('-')[:3]),
                     '-'.join(sample.rsplit('-')[3:]))
@@ -74,12 +75,14 @@ def _clean_samples(data, **kwargs):
     return data
 
 
-def _clean_genes(data):
+def clean_genes(data):
+    logger.info('clean genes: remove empty and zero columns')
     # drop columns that are ALL NaN
     null_columns = data.columns.values[data.isnull().all(0)]
     logger.info('null genes to remove: '+str(null_columns.shape[0]))
-    data.drop(null_columns, axis=1, inplace=True)
-    logger.info('data shape (after removing null genes): '+str(data.shape))
+    if null_columns.shape[0] > 0:
+        data.drop(null_columns, axis=1, inplace=True)
+        logger.info('data shape (after removing null genes): '+str(data.shape))
 
     # sanity check (TODO: set imputation in case it fails)
     nan_exist = data.isnull().any().any()
@@ -90,8 +93,9 @@ def _clean_genes(data):
     # drop columns that contain all zeroes
     zero_columns = data.columns.values[np.where(abs(data).sum(axis=0) == 0)[0]]
     logger.info('zero genes to remove: '+str(zero_columns.shape[0]))
-    data.drop(zero_columns, axis=1, inplace=True)
-    logger.info('data shape (after removing zero genes): '+str(data.shape))
+    if zero_columns.shape[0] > 0:
+        data.drop(zero_columns, axis=1, inplace=True)
+        logger.info('data shape (after removing zero genes): '+str(data.shape))
 
     return data
 
@@ -109,7 +113,7 @@ def reverse_processing(x, mu, std, data_type='cnv'):
     return y
 
 
-def prepare_data(data_filename, **kwargs):
+def load_data(data_filename, **kwargs):
     # read functions arguments
     data_type = kwargs.get('data_type', 'cnv')
     logger.info('data type to process : '+data_type)
@@ -122,15 +126,7 @@ def prepare_data(data_filename, **kwargs):
     my_bool = not(data.columns.value_counts() == 1).all()
     if my_bool:
         logger.error('gene duplicate NAMES exist!')
-        return data, None
-
-    # clean samples
-    # remove duplicates, check sample types, set index
-    data = _clean_samples(data, **kwargs)
-
-    # clean genes
-    # remove nan and zero columns
-    data = _clean_genes(data)
+        return data
 
     return data
 
@@ -166,7 +162,9 @@ def split_data(data, **kwargs):
 
 
 def transform_data(data, **kwargs):
-    transformation_settings = pd.DataFrame(index = data.index, columns=['arcsinh', 'stand', 'mean', 'std'])
+    transformation_settings = \
+        pd.DataFrame(index=data.index,
+                     columns=['arcsinh', 'stand', 'mean', 'std'])
     to_arcsinh = kwargs.get('to_arcsinh', False)
     transformation_settings['arcsinh'] = to_arcsinh
     to_stand = kwargs.get('to_stand', True)
@@ -174,12 +172,12 @@ def transform_data(data, **kwargs):
 
     # arcsinh transformation
     if to_arcsinh:
-        logger.info('arcsinh data transformation')
+        logger.info('transformation: arcsinh data...')
         data.values[:] = np.arcsinh(data.values)
 
     # standardize transformation
     if to_stand:
-        logger.info('stand data transformation')
+        logger.info('transformation: standardize data...')
         data_mean = data.mean()
         data_std = data.std()
         data = (data - data_mean) / data_std
@@ -198,11 +196,11 @@ def sort_data(data, **kwargs):
         gene_dict = kwargs.get('gene_dict', None)
         if gene_dict is None:
             logger.error('gene_dict is missing: ' +
-                           'genes will not be sorted')
+                         'genes will not be sorted')
             raise
 
         data = pd.DataFrame(data, columns=sorted(gene_dict, key=gene_dict.get))
-        logger.info('sorted genes by gene dictionary')
+        logger.info('sort genes by chromosome position with gene_dict')
 
     # sort samples
     if to_sort_rows:
@@ -210,11 +208,11 @@ def sort_data(data, **kwargs):
         clinical = kwargs.get('clinical', None)
         if clinical is None:
             logger.error('clinical data is missing: ' +
-                           'samples will not be sorted')
+                         'samples will not be sorted')
             raise
 
         data, clinical = _sort_patients(data, clinical, sort_patients_by)
-        logger.info('sorted patients by: '+str(sort_patients_by))
+        logger.info('sort patients by: '+str(sort_patients_by))
 
     return data
 

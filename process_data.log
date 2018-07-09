@@ -1,0 +1,20 @@
+INFO:omics_processing.io:Load gene dict file: ./bin/../data/processed/gaf.json
+INFO:omics_processing.io:Load clinical file: ./bin/../data/processed/clinical.txt
+INFO:omics_processing.process_data:data type to process : cnv
+INFO:omics_processing.process_data:load raw data: ./bin/../data/input/gistic-cn-processed.tsv
+INFO:omics_processing.process_data:data size: (492, 18903)
+INFO:omics_processing.process_data:clean samples: dupl, sample info, index
+INFO:omics_processing.process_data:number of all duplicated patients: 0
+INFO:omics_processing.process_data:sample types: ['01']
+INFO:omics_processing.process_data:replaced index
+INFO:omics_processing.process_data:Splitting data...
+INFO:omics_processing.process_data:data, split 1, size: (100, 18903)
+INFO:omics_processing.process_data:data, split 2, size: (392, 18903)
+INFO:omics_processing.process_data:clean genes: remove empty and zero columns
+INFO:omics_processing.process_data:null genes to remove: 0
+INFO:omics_processing.process_data:zero genes to remove: 0
+INFO:omics_processing.process_data:transformation: standardize data...
+INFO:omics_processing.process_data:sort genes by chromosome position with gene_dict
+INFO:omics_processing.process_data:sort patients by: ['grade_group']
+INFO:omics_processing.process_data:output files will be saved in: /Users/lle/GitRepos/myRepos/omics_processing/omics_processing/../data/processed
+INFO:omics_processing.process_data:save data as csv: /Users/lle/GitRepos/myRepos/omics_processing/omics_processing/../data/processed/cnv__split_size100_seed0_part1.txt

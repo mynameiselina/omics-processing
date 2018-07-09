@@ -18,13 +18,20 @@ from omics_processing.io import get_gaf
     outdir=plac.Annotation(
         'Folder where the output will be saved.',
         type=str
+    ),
+    DEBUG=plac.Annotation(
+        'Set True if you want to DEBUG the code.',
+        'option', 'd', bool
     )
 )
 def main(
     filepath=os.path.join(script_path, "..", "data", "input",
                           "gene.genome.v4_0.processed.gaf"),
-    outdir=os.path.join(script_path, "..", "data", "processed")
+    outdir=os.path.join(script_path, "..", "data", "processed"),
+    DEBUG=True
 ):
+    if DEBUG:
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     """ Get GAF file"""
     _ = get_gaf(filepath, outdir)
 
