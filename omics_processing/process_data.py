@@ -5,11 +5,7 @@ import pandas as pd
 import json
 import logging
 from sklearn.model_selection import train_test_split
-from .io import set_directory, load_gene_positions
-from utils.plotting_utils import plot_dist_and_heatmap
-from utils.load_functions import (
-    load_gene_positions, load_clinical, order_patients
-)
+from .io import set_directory
 
 script_path = os.path.dirname(__file__)
 logger = logging.getLogger(__name__)
@@ -140,23 +136,29 @@ def prepare_data(data_filename, **kwargs):
 
 
 def split_data(data, **kwargs):
-    stratify_patients_by = kwargs.get('stratify_patients_by', None)
+    stratify_by = kwargs.get('stratify_by', None)
     split_train_size = kwargs.get('split_train_size', 0.5)
     split_random_state = kwargs.get('split_random_state', 0)
 
     # split the data into training and testing sets
     logger.info('Splitting data...')
-    if stratify_patients_by is None:
+    if stratify_by is None:
         data_s1, data_s2 = \
             train_test_split(data,
                              train_size=split_train_size,
+                             # From version 0.21, test_size will always
+                             # complement train_size unless both are specified.
+                             test_size=None,
                              random_state=split_random_state)
     else:
         data_s1, data_s2, y_s1, y_s2 = \
-            train_test_split(data, stratify_patients_by,
+            train_test_split(data, stratify_by,
                              train_size=split_train_size,
+                             # From version 0.21, test_size will always
+                             # complement train_size unless both are specified.
+                             test_size=None,
                              random_state=split_random_state,
-                             stratify=stratify_patients_by)
+                             stratify=stratify_by)
     logger.info('data, split 1, size: '+str(data_s1.shape))
     logger.info('data, split 2, size: '+str(data_s2.shape))
 
@@ -164,11 +166,11 @@ def split_data(data, **kwargs):
 
 
 def transform_data(data, **kwargs):
-    transformation_settings = {}
+    transformation_settings = pd.DataFrame(index = data.index, columns=['arcsinh', 'stand', 'mean', 'std'])
     to_arcsinh = kwargs.get('to_arcsinh', False)
-    transformation_settings['to_arcsinh'] = to_arcsinh
+    transformation_settings['arcsinh'] = to_arcsinh
     to_stand = kwargs.get('to_stand', True)
-    transformation_settings['to_stand'] = to_stand
+    transformation_settings['stand'] = to_stand
 
     # arcsinh transformation
     if to_arcsinh:
@@ -195,10 +197,9 @@ def sort_data(data, **kwargs):
     if to_sort_columns:
         gene_dict = kwargs.get('gene_dict', None)
         if gene_dict is None:
-            logger.warning('gene_dict is missing: ' +
+            logger.error('gene_dict is missing: ' +
                            'genes will not be sorted')
-        else:
-            gene_dict = load_gene_order_dict(gene_dict_fpath)
+            raise
 
         data = pd.DataFrame(data, columns=sorted(gene_dict, key=gene_dict.get))
         logger.info('sorted genes by gene dictionary')
@@ -208,10 +209,9 @@ def sort_data(data, **kwargs):
         sort_patients_by = kwargs.get('sort_patients_by', ['grade_group'])
         clinical = kwargs.get('clinical', None)
         if clinical is None:
-            logger.warning('clinical data is missing: ' +
+            logger.error('clinical data is missing: ' +
                            'samples will not be sorted')
-        else:
-            clinical = load_clinical(clinical_fpath)
+            raise
 
         data, clinical = _sort_patients(data, clinical, sort_patients_by)
         logger.info('sorted patients by: '+str(sort_patients_by))
@@ -224,12 +224,19 @@ def save_output(data, **kwargs):
                                   os.path.join(script_path, "..", "data",
                                                "processed"))
     output_filename = kwargs.get('output_filename', 'data_processed.txt')
+    transformation_settings = kwargs.get('transformation_settings', None)
 
     # define dirs
     logger.info('output files will be saved in: '+output_directory)
     _ = set_directory(output_directory)
 
-    # saving data
+    # saving data (csv)
     fpath = os.path.join(output_directory, output_filename)
-    logger.info('Save data: '+fpath)
-    data.to_csv(fpath, sep='\t')
+    logger.info('save data as csv: '+fpath+'.txt')
+    data.to_csv(fpath+'.txt', sep='\t')
+
+    # saving transformation_settings (csv)
+    if transformation_settings is not None:
+        fpath = fpath+'__transformation_settings'
+        logger.info('save transformation_settings as csv: '+fpath+'.txt')
+        transformation_settings.to_csv(fpath+'.txt', sep='\t')
