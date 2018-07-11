@@ -205,7 +205,7 @@ def sort_data(data, **kwargs):
         data = pd.DataFrame(data, columns=sorted(gene_dict, key=gene_dict.get))
         logger.info('sort genes by chromosome position with gene_dict')
 
-    # sort samples
+    # sort samples by 'grade_group'
     if to_sort_rows:
         sort_patients_by = kwargs.get('sort_patients_by', ['grade_group'])
         clinical = kwargs.get('clinical', None)
