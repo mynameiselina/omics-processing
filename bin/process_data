@@ -1,10 +1,31 @@
 #!/usr/bin/env python3
 """
-get the gaf file from TCGA for the gene positions
-sort GAF by pos (chr and start-end) and save as csv
-create a column with the correct position order
-create ans save dictionary of gene names and their order
-create ans save dictionary of gene names and their chr
+process the CNV data from TCGA PRAD
+load_data, clean_samples, split_data,
+clean_genes, transform_data, sort_data
+
+clean_samples:
+check if we have more than one samples per patient
+extract patient and sample info from barcode
+check what sample types exist
+replace the index
+
+split_data:
+split the data into training and testing sets
+(train_size should be smaller than 1.0 or be an integer)
+
+clean_genes:
+drop columns that are ALL NaN
+sanity check (TODO: set imputation in case it fails)
+drop columns that contain all zeroes
+
+transform_data:
+arcsinh transformation [optional]
+standardize transformation
+
+sort_data:
+sort the table columns with the genes chr position
+sort samples by 'grade_group'
 """
 import os
 import sys
@@ -162,7 +183,8 @@ def main(
     if output_filename is None:
         output_filename = ''
 
-    # load_data, split_data, clean_data, transform_data, sort_data
+    # load_data, clean_samples, split_data,
+    # clean_genes, transform_data, sort_data
     data = load_data(filepath, **kwargs)
     output_filename = output_filename+kwargs['data_type']
 

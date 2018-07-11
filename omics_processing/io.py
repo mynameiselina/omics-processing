@@ -85,29 +85,13 @@ def get_clinical_TCGA(fpath, datadir_out,
         logger.info(' - Invalid gleason group values: ' +
                     repr(any(clinical_small.grade_group == -9999)))
 
-    # # sort table with grade group
-    # clinical_small.sort_values(['grade_group'], ascending=[0], inplace=True)
-    # clinical_small.reset_index(drop=True, inplace=True)
-
-    # # create a column with the correct grade group order
-    # clinical_small['grgr_order'] = range(clinical_small.shape[0])
-
-    # # create dictionary of patient barcodes and their order
-    # patient_order = dict((clinical_small[key_col][i],
-    #                       int(clinical_small['grgr_order'][i]))
-    #                      for i in range(clinical_small.shape[0]))
-
     # save pandas(csv) and dict (json)
     datadir_out = set_directory(datadir_out)
     fpath_out = datadir_out+'clinical'
     clinical_small.to_csv(fpath_out+'.txt', sep='\t')
     logger.info('saved: '+fpath_out+'.txt')
 
-    # with open(fpath_out+'.json', 'w') as fp:
-    #     json.dump(patient_order, fp, indent=4)
-    # logger.info('saved: '+fpath_out+'.json')
-
-    return clinical_small   # , patient_order
+    return clinical_small
 
 
 # RUN JUST ONE TIME
