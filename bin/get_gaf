@@ -33,7 +33,10 @@ def main(
     if DEBUG:
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     """ Get GAF file"""
-    _ = get_gaf(filepath, outdir)
+    _ = get_gaf(filepath, outdir, **{
+                                        'delimiter': '\t',
+                                        'header': None
+                                    })
 
 
 if __name__ == '__main__':

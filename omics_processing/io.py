@@ -17,9 +17,9 @@ def set_directory(mydir):
 
 
 # RUN JUST ONE TIME
-def get_clinical(fpath, datadir_out,
-                 key_col,
-                 **kwargs):
+def get_clinical_TCGA(fpath, datadir_out,
+                      key_col,
+                      **kwargs):
 
     old_file_format = kwargs.pop('old_file_format', False)
     if old_file_format:
@@ -111,10 +111,10 @@ def get_clinical(fpath, datadir_out,
 
 
 # RUN JUST ONE TIME
-def get_gaf(fpath, datadir_out):
+def get_gaf(fpath, datadir_out, **read_csv_kwargs):
 
     # load GAF
-    gaf = pd.read_csv(fpath, delimiter='\t', header=None)
+    gaf = pd.read_csv(fpath, **read_csv_kwargs)
 
     # save some columns of GAF and create new ones
     gaf_small = gaf.iloc[:, [1, 16]].copy()
@@ -209,14 +209,14 @@ def get_gaf(fpath, datadir_out):
 
 
 # load the processed gaf file with the genes positions
-def load_gene_positions(fpath):
+def load_gene_positions(fpath, **read_csv_kwargs):
+    # **{ 'sep': '\t', 'index_col': 0, 'header': 0}
     # gaf file with gene positions
     if not os.path.exists(fpath):
         return None
     else:
         logger.info('Load gaf file: '+fpath)
-        genes_positions_table = pd.read_csv(fpath, sep='\t',
-                                            index_col=0, header=0)
+        genes_positions_table = pd.read_csv(fpath, **read_csv_kwargs)
         genes_positions_table = genes_positions_table[['gene', 'chr']]
         genes_positions_table.columns = ['id', 'chr']
 
@@ -241,11 +241,12 @@ def load_gene_order_dict(fpath):
 
 
 # load the clinical data from the patients cohort
-def load_clinical(fpath):
+def load_clinical(fpath, col_as_index=None, **read_csv_kwargs):
     # load clinical to get patient labels on the grade group
     logger.info('Load clinical file: '+fpath)
-    clinical = pd.read_csv(fpath, delimiter='\t', header=0, index_col=0)
-    # clinical.set_index(['bcr_patient_barcode'], inplace=True, drop = True)
+    clinical = pd.read_csv(fpath, **read_csv_kwargs)
+    if col_as_index is not None:
+        clinical.set_index([col_as_index], inplace=True, drop=True)
     # clinical = clinical.loc[data.index]
 
     return clinical

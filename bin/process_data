@@ -151,7 +151,12 @@ def main(
     kwargs['gene_dict'] = load_gene_order_dict(gene_dict_fpath)
     kwargs['to_sort_rows'] = to_sort_rows
     kwargs['sort_patients_by'] = sort_patients_by
-    kwargs['clinical'] = load_clinical(clinical_fpath)
+    kwargs['clinical'] = load_clinical(clinical_fpath,
+                                       **{
+                                           'sep': '\t',
+                                           'header': 0,
+                                           'index_col': 0
+                                       })
     kwargs['to_remove_duplicate_columns'] = to_remove_duplicate_columns
 
     if output_filename is None:

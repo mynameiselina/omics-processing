@@ -9,7 +9,7 @@ create ans save dictionary of gene names and their chr
 import os
 import sys
 import plac
-from omics_processing.io import get_clinical
+from omics_processing.io import get_clinical_TCGA
 import logging
 script_path = os.path.dirname(__file__)
 
@@ -71,9 +71,9 @@ def main(
               }
 
     """ Get GAF file"""
-    _ = get_clinical(filepath, outdir,
-                     key_col,
-                     **kwargs)
+    _ = get_clinical_TCGA(filepath, outdir,
+                          key_col,
+                          **kwargs)
 
 
 if __name__ == '__main__':
