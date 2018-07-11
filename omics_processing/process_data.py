@@ -136,6 +136,9 @@ def split_data(data, **kwargs):
     split_train_size = kwargs.get('split_train_size', 0.5)
     split_random_state = kwargs.get('split_random_state', 0)
 
+    # train_size should be smaller than 1.0 or be an integer
+    if split_train_size >= 1:
+        split_train_size = int(split_train_size)
     # split the data into training and testing sets
     logger.info('Splitting data...')
     if stratify_by is None:

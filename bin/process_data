@@ -178,7 +178,7 @@ def main(
                         '_seed'+str(kwargs['split_random_state'])
         else:
             splitname = '_split_size' + \
-                        str(kwargs['split_train_size']) + \
+                        str(int(kwargs['split_train_size'])) + \
                         '_seed'+str(kwargs['split_random_state'])
         output_filename = output_filename+'_'+splitname
         fname_list = [output_filename+'_part1', output_filename+'_part2']
