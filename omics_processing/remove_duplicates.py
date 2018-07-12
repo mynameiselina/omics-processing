@@ -119,7 +119,7 @@ def remove_andSave_duplicates(indata, **kwargs):
         kwargs.get('to_save_euclidean_distances', False)
     to_save_output = kwargs.get('to_save_output', True)
 
-    output_filename = kwargs.get('output_filename', False)
+    output_filename = kwargs.get('output_filename', 'data_wo_duplicates')
     output_directory = kwargs.get('output_directory',
                                   os.path.join(script_path, "..", "data",
                                                "processed"))
