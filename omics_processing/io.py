@@ -230,6 +230,7 @@ def load_clinical(fpath, col_as_index=None, **read_csv_kwargs):
     logger.info('Load clinical file: '+fpath)
     clinical = pd.read_csv(fpath, **read_csv_kwargs)
     if col_as_index is not None:
+        clinical.dropna(subset=[col_as_index], inplace=True)
         clinical.set_index([col_as_index], inplace=True, drop=True)
     # clinical = clinical.loc[data.index]
 
