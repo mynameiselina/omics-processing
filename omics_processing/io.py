@@ -225,13 +225,14 @@ def load_gene_order_dict(fpath):
 
 
 # load the clinical data from the patients cohort
-def load_clinical(fpath, col_as_index=None, **read_csv_kwargs):
+def load_clinical(fpath, **read_csv_kwargs):
+    col_as_index = read_csv_kwargs.pop('col_as_index', None)
     # load clinical to get patient labels on the grade group
     logger.info('Load clinical file: '+fpath)
     clinical = pd.read_csv(fpath, **read_csv_kwargs)
     if col_as_index is not None:
-        clinical.dropna(subset=[col_as_index], inplace=True)
-        clinical.set_index([col_as_index], inplace=True, drop=True)
-    # clinical = clinical.loc[data.index]
+        if col_as_index != clinical.index.name:
+            clinical.dropna(subset=[col_as_index], inplace=True)
+            clinical.set_index([col_as_index], inplace=True, drop=True)
 
     return clinical
