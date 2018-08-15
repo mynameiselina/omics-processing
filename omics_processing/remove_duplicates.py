@@ -46,9 +46,9 @@ def _compute_euclidean_distances(data, euclidean_distances_fpath,
     return euclidean_distances_condensed
 
 
-def _load_euclidean_distances(data_name, euclidean_distances_fpath):
+def _load_euclidean_distances(euclidean_distances_fpath):
 
-    if os.path.exists(fpath):
+    if os.path.exists(euclidean_distances_fpath):
         # exists
         with h5py.File(euclidean_distances_fpath, 'r') as hf:
             logger.debug('List of arrays in this file: \n'+str(hf.keys()))
