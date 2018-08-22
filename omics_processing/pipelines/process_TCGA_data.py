@@ -82,7 +82,7 @@ def run_pipeline(
     output_directory = os.path.join(MainDataDir, join_path(output_directory))
     gene_dict_fpath = os.path.join(MainDataDir, join_path(gene_dict_fpath))
     clinical_fpath = os.path.join(MainDataDir, join_path(clinical_fpath))
-    
+
     clinical = load_clinical(
         clinical_fpath,
         **{
