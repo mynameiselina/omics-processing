@@ -121,6 +121,7 @@ class develop(_develop):
 
 
 scripts = [
+    'bin/debug_pipeline',
     'bin/get_gaf',
     'bin/get_clinical',
     'bin/process_data'
