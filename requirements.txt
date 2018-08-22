@@ -4,11 +4,6 @@ scipy
 scikit-learn
 matplotlib
 seaborn
-os
-sys
 plac
-logging
-timeit
 h5py
-json
 natsort
