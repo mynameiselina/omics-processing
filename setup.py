@@ -122,9 +122,9 @@ class develop(_develop):
 
 scripts = [
     'bin/debug_pipeline',
-    'bin/get_gaf',
-    'bin/get_clinical',
-    'bin/process_data'
+    'bin/process_TCGA_gaf',
+    'bin/process_TCGA_clinical',
+    'bin/process_TCGA_data'
 ]
 
 setup(

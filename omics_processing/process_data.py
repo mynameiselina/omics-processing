@@ -166,7 +166,7 @@ def split_data(data, **kwargs):
 
 def transform_data(data, **kwargs):
     transformation_settings = \
-        pd.DataFrame(index=data.index,
+        pd.DataFrame(index=data.columns,
                      columns=['arcsinh', 'stand', 'mean', 'std'])
     to_arcsinh = kwargs.get('to_arcsinh', False)
     transformation_settings['arcsinh'] = to_arcsinh
@@ -184,8 +184,8 @@ def transform_data(data, **kwargs):
         data_mean = data.mean()
         data_std = data.std()
         data = (data - data_mean) / data_std
-        transformation_settings['data_mean'] = data_mean
-        transformation_settings['data_std'] = data_std
+        transformation_settings['mean'] = data_mean
+        transformation_settings['std'] = data_std
 
     return data, transformation_settings
 

@@ -17,9 +17,8 @@ def set_directory(mydir):
 
 
 # RUN JUST ONE TIME
-def get_clinical_TCGA(fpath, datadir_out,
-                      key_col,
-                      **kwargs):
+def process_clinical_TCGA(
+        fpath, datadir_out, key_col, **kwargs):
 
     old_file_format = kwargs.pop('old_file_format', False)
     if old_file_format:
@@ -46,7 +45,7 @@ def get_clinical_TCGA(fpath, datadir_out,
             raise
         split_gleason_cols = gleason_cols.rsplit(',')
         select_columns.extend(split_gleason_cols)
-        logger.debug(select_columns)
+        logger.debug("Keep columns from clinical table:\n"+str(select_columns))
 
     other_cols = kwargs.pop('other_cols', None)
     if other_cols is not None:
@@ -82,20 +81,23 @@ def get_clinical_TCGA(fpath, datadir_out,
                            'grade_group'] = 3
         clinical_small.loc[score == 8, 'grade_group'] = 4
         clinical_small.loc[score >= 9, 'grade_group'] = 5
-        logger.info(' - Invalid gleason group values: ' +
-                    repr(any(clinical_small.grade_group == -9999)))
+        _invalid_values = (clinical_small.grade_group == -9999)
+        if any(_invalid_values):
+            logger.info(
+                'Invalid gleason group values for samples:\n' +
+                clinical_small.index[_invalid_values])
 
     # save pandas(csv) and dict (json)
     datadir_out = set_directory(datadir_out)
-    fpath_out = datadir_out+'clinical'
-    clinical_small.to_csv(fpath_out+'.txt', sep='\t')
-    logger.info('saved: '+fpath_out+'.txt')
+    fpath_out = os.path.join(datadir_out, 'clinical.txt')
+    clinical_small.to_csv(fpath_out, sep='\t')
+    logger.info('saved: '+fpath_out)
 
     return clinical_small
 
 
 # RUN JUST ONE TIME
-def get_gaf(fpath, datadir_out, **read_csv_kwargs):
+def process_TCGA_gaf(fpath, datadir_out, **read_csv_kwargs):
 
     # load GAF
     gaf = pd.read_csv(fpath, **read_csv_kwargs)
@@ -177,7 +179,7 @@ def get_gaf(fpath, datadir_out, **read_csv_kwargs):
 
     # save pandas(csv) and dict(json)
     datadir_out = set_directory(datadir_out)
-    fpath_out = datadir_out+'gaf'
+    fpath_out = os.path.join(datadir_out, 'gaf')
     gaf_posMerged.to_csv(fpath_out+'.txt', sep='\t')
     logger.info('saved: '+fpath_out+'.txt')
 
@@ -236,3 +238,20 @@ def load_clinical(fpath, **read_csv_kwargs):
             clinical.set_index([col_as_index], inplace=True, drop=True)
 
     return clinical
+
+
+def check_path_integrity(f, rootDir=None, name="", force=False):
+    if not os.path.exists(f):
+        f = os.path.join(*f.rsplit('/'))
+        if rootDir is not None:
+            f = os.path.join(rootDir, f)
+        if force:
+            f = set_directory(f)
+        logger.debug("set "+name+" fpath:\n"+f)
+    return f
+
+
+def join_path(fpath, sep='/'):
+    if sep in fpath:
+        fpath = os.path.join(*fpath.rsplit(sep))
+    return fpath

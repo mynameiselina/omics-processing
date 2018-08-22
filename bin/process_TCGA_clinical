@@ -6,10 +6,10 @@ extract score values
 create grade group column
 save pandas(csv) and dict (json)
 """
+from omics_processing.io import process_clinical_TCGA, join_path
 import os
 import sys
 import plac
-from omics_processing.io import get_clinical_TCGA
 import logging
 script_path = os.path.dirname(__file__)
 
@@ -45,21 +45,19 @@ script_path = os.path.dirname(__file__)
     )
 )
 def main(
-    # filepath="../data/input/nationwidechildrens.org_clinical_patient_prad.txt",
-    # outdir="../data/processed/",
+    # filepath="TCGA_PRAD/input/nationwidechildrens.org_clinical_patient_prad.txt",
     # key_col="bcr_patient_barcode",
-    # gleason_score_col="gleason_score",
-    # gleason_primary_col="gleason_pattern_primary",
-    # gleason_secondary_col="gleason_pattern_secondary",
-    filepath=os.path.join(script_path, "..", "data", "input",
-                          "gdac.broadinstitute.org_PRAD." +
-                          "Merge_Clinical.Level_1.2016012800.0.0",
-                          "PRAD.clin.merged.txt"),
-    outdir=os.path.join(script_path, "..", "data", "processed"),
+    # gleason_cols="gleason_score," +
+    #              "gleason_pattern_primary," +
+    #              "gleason_pattern_secondary",
+    filepath="TCGA_PRAD/input/gdac.broadinstitute.org_PRAD." +
+             "Merge_Clinical.Level_1.2016012800.0.0/" +
+             "PRAD.clin.merged.txt",
     key_col="patient.bcr_patient_barcode",
     gleason_cols="patient.stage_event.gleason_grading.gleason_score," +
                  "patient.stage_event.gleason_grading.primary_pattern," +
                  "patient.stage_event.gleason_grading.secondary_pattern",
+    outdir="TCGA_PRAD/processed",
     other_cols=None,
     DEBUG=True
 ):
@@ -70,10 +68,16 @@ def main(
               'other_cols': other_cols,
               }
 
+    # set main data directory
+    MainDataDir = os.path.join(script_path, '..', 'data')
+
+    # make fpaths valid
+    filepath = os.path.join(MainDataDir, join_path(filepath))
+    outdir = os.path.join(MainDataDir, join_path(outdir))
+
     """ Get GAF file"""
-    _ = get_clinical_TCGA(filepath, outdir,
-                          key_col,
-                          **kwargs)
+    _ = process_clinical_TCGA(
+        filepath, outdir, key_col, **kwargs)
 
 
 if __name__ == '__main__':
