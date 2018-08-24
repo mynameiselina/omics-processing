@@ -240,18 +240,62 @@ def load_clinical(fpath, **read_csv_kwargs):
     return clinical
 
 
-def check_path_integrity(f, rootDir=None, name="", force=False):
+def check_path_integrity(f, rootDir=None, name=None, force=False):
+    if name is None:
+        name = ""
     if not os.path.exists(f):
         f = os.path.join(*f.rsplit('/'))
         if rootDir is not None:
-            f = os.path.join(rootDir, f)
+            if rootDir not in f:
+                f = os.path.join(rootDir, f)
         if force:
             f = set_directory(f)
+    if not os.path.exists(f):
+        f = None
+        logger.warning(name+" fpath does not exist!")
+    else:
         logger.debug("set "+name+" fpath:\n"+f)
+
     return f
 
 
 def join_path(fpath, sep='/'):
+    start_on_root = False
+    if fpath.startswith('/'):
+        start_on_root = True
     if sep in fpath:
         fpath = os.path.join(*fpath.rsplit(sep))
+    if start_on_root:
+        fpath = os.path.join('/', fpath)
+
     return fpath
+
+
+def fpath_absolute_relative(fpath, rootDir=None, name=None):
+    fpath = join_path(fpath)
+    if name is None:
+        name = ""
+    fpath = join_path(fpath)
+    if check_path_integrity(
+            fpath, rootDir=None,
+            name=name+" (absolute path)", force=False) is None:
+        if rootDir is not None:
+            fpath = check_path_integrity(
+                fpath, rootDir=MainDataDir,
+                name=name+" (relative path)", force=False)
+            if fpath is None:
+                logger.error(name+" invalid fpath! Abort...")
+                raise
+        else:
+            logger.warning(name+" relative root directory is missing!")
+    return fpath
+
+
+def parse_arg_type(arg, type):
+    if arg is not None:
+        if not isinstance(arg, type):
+            if type == bool:
+                arg = bool(strtobool(arg))
+            else:
+                arg = type(arg)
+    return arg

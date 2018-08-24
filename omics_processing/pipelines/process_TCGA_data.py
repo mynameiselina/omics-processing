@@ -30,7 +30,7 @@ sort samples by 'grade_group'
 # custom imports
 from omics_processing.io import (
     load_gene_order_dict, load_clinical,
-    join_path
+    join_path, fpath_absolute_relative
 )
 from omics_processing.process_data import (
     load_data, split_data, clean_samples, clean_genes,
@@ -40,9 +40,8 @@ from omics_processing.remove_duplicates import remove_andSave_duplicates
 
 # basic imports
 import os
-import sys
-import plac
 import logging
+logger = logging.getLogger(__name__)
 
 script_path = os.path.dirname(__file__)
 
@@ -75,14 +74,18 @@ def run_pipeline(
     output_filename=None
 ):
     # set main data directory
-    MainDataDir = os.path.join(script_path, '..', '..', 'data')
+    MainDataDir = join_path(script_path+'/../../data')
 
     # make fpaths valid
-    filepath = os.path.join(MainDataDir, join_path(filepath))
-    output_directory = os.path.join(MainDataDir, join_path(output_directory))
-    gene_dict_fpath = os.path.join(MainDataDir, join_path(gene_dict_fpath))
-    clinical_fpath = os.path.join(MainDataDir, join_path(clinical_fpath))
-
+    # data input
+    filepath = fpath_absolute_relative(
+        fpath, rootDir=MainDataDir, name="data input")
+    # gene order table
+    gene_dict_fpath = fpath_absolute_relative(
+        gene_dict_fpath, rootDir=MainDataDir, name="gene order table")
+    # clinical info
+    clinical_fpath = fpath_absolute_relative(
+        clinical_fpath, rootDir=MainDataDir, name="clinical info")
     clinical = load_clinical(
         clinical_fpath,
         **{
@@ -90,6 +93,8 @@ def run_pipeline(
             'header': 0,
             'index_col': 0
         })
+    # output dir
+    output_directory = os.path.join(MainDataDir, join_path(output_directory))
 
     if output_filename is None:
         output_filename = ''
@@ -98,8 +103,10 @@ def run_pipeline(
     # clean_genes, transform_data, sort_data
     data = load_data(filepath, data_type=data_type)
     output_filename = output_filename+data_type
+    logger.debug("finished loading data")
 
     data = clean_samples(data, sample_type=sample_type)
+    logger.debug("finished cleaning samples")
     # in case multiple sample types exist,
     # the 'sample_type' will change inside clean_data()
     if sample_type is not None:
@@ -113,6 +120,7 @@ def run_pipeline(
             data, stratify_by=stratify_by,
             split_train_size=split_train_size,
             split_random_state=split_random_state)
+        logger.debug("finished splitting data sample sets")
         if split_train_size < 1:
             splitname = '_split_perc' + \
                         str(int(split_train_size*100)) + \
@@ -127,27 +135,36 @@ def run_pipeline(
         data_list = [data]
         fname_list = [output_filename]
 
+    _counter = 0
     for _data, _fname in zip(data_list, fname_list):
 
         _data = clean_genes(_data)
+        logger.debug("finished cleaning genes in set "+str(_counter))
 
         _data, transformation_settings = transform_data(
             _data, to_arcsinh=to_arcsinh, to_stand=to_stand)
+        logger.debug("finished transforming data in set "+str(_counter))
 
         if to_sort_columns or to_sort_rows:
             sort_patients_by = sort_patients_by.rsplit(',')
+            logger.debug("finished sorting samples in set "+str(_counter))
             gene_dict = load_gene_order_dict(gene_dict_fpath)
+            logger.debug(
+                "finished loading genes order dictionary in set " +
+                str(_counter))
             _data = sort_data(
                 _data, to_sort_columns=to_sort_columns,
                 to_sort_rows=to_sort_rows,
                 gene_dict=gene_dict,
                 sort_patients_by=sort_patients_by,
                 clinical=clinical)
+            logger.debug("finished sorting data in set "+str(_counter))
 
         output_filename = _fname+'_processed'
         save_output(
             _data, transformation_settings=transformation_settings,
             output_directory=output_directory, output_filename=output_filename)
+        logger.debug("finished saving data output in set "+str(_counter))
 
         if to_remove_duplicate_columns:
             load_from_file = False
@@ -159,3 +176,8 @@ def run_pipeline(
                 to_save_output=to_save_output,
                 output_filename=output_filename,
                 output_directory=output_directory)
+            logger.debug(
+                "finished removing duplicate gene profiles in set " +
+                str(_counter))
+
+        _counter += 1
