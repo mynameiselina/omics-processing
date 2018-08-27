@@ -281,7 +281,7 @@ def fpath_absolute_relative(fpath, rootDir=None, name=None):
             name=name+" (absolute path)", force=False) is None:
         if rootDir is not None:
             fpath = check_path_integrity(
-                fpath, rootDir=MainDataDir,
+                fpath, rootDir=rootDir,
                 name=name+" (relative path)", force=False)
             if fpath is None:
                 logger.error(name+" invalid fpath! Abort...")

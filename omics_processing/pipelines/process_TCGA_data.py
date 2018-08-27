@@ -41,6 +41,7 @@ from omics_processing.remove_duplicates import remove_andSave_duplicates
 # basic imports
 import os
 import logging
+import pandas as pd
 logger = logging.getLogger(__name__)
 
 script_path = os.path.dirname(__file__)
@@ -50,7 +51,7 @@ def run_pipeline(
     # load_data
     filepath="TCGA_PRAD/input/gistic-cn-processed.tsv",
     clinical_fpath="TCGA_PRAD/processed/clinical.txt",
-    gene_dict_fpath="TCGA_PRAD/processed/gaf.json",
+    gaf_fpath="TCGA_PRAD/processed/gaf.json",
     output_directory="TCGA_PRAD/processed",
     data_type='cnv',
     # clean_samples
@@ -62,8 +63,11 @@ def run_pipeline(
     # transform_data
     to_arcsinh=False,
     to_stand=True,
-    # sort_data
+    # sort_data: genes
     to_sort_columns=True,
+    gene_id_col='gene',
+    gene_order_col='pos_order',
+    # sort_data: samples
     to_sort_rows=True,
     sort_patients_by="grade_group",
     # remove_andSave_duplicates
@@ -79,10 +83,10 @@ def run_pipeline(
     # make fpaths valid
     # data input
     filepath = fpath_absolute_relative(
-        fpath, rootDir=MainDataDir, name="data input")
+        filepath, rootDir=MainDataDir, name="data input")
     # gene order table
-    gene_dict_fpath = fpath_absolute_relative(
-        gene_dict_fpath, rootDir=MainDataDir, name="gene order table")
+    gaf_fpath = fpath_absolute_relative(
+        gaf_fpath, rootDir=MainDataDir, name="gene order table")
     # clinical info
     clinical_fpath = fpath_absolute_relative(
         clinical_fpath, rootDir=MainDataDir, name="clinical info")
@@ -104,6 +108,23 @@ def run_pipeline(
     data = load_data(filepath, data_type=data_type)
     output_filename = output_filename+data_type
     logger.debug("finished loading data")
+
+    # clean genes
+    data = clean_genes(data)
+    logger.debug("finished cleaning genes in all samples")
+
+    if to_sort_columns:
+        genes_positions_table = pd.read_csv(
+            gaf_fpath, sep='\t', header=0, index_col=0)
+        gene_order = genes_positions_table.set_index(
+            gene_id_col).loc[:, gene_order_col]
+        logger.debug(
+            "finished loading genes order")
+        data = sort_data(
+            data, to_sort_columns=True,
+            to_sort_rows=False,
+            gene_order=gene_order)
+        logger.debug("finished sorting genes in all samples")
 
     data = clean_samples(data, sample_type=sample_type)
     logger.debug("finished cleaning samples")
@@ -145,20 +166,15 @@ def run_pipeline(
             _data, to_arcsinh=to_arcsinh, to_stand=to_stand)
         logger.debug("finished transforming data in set "+str(_counter))
 
-        if to_sort_columns or to_sort_rows:
+        if to_sort_rows:
             sort_patients_by = sort_patients_by.rsplit(',')
-            logger.debug("finished sorting samples in set "+str(_counter))
-            gene_dict = load_gene_order_dict(gene_dict_fpath)
-            logger.debug(
-                "finished loading genes order dictionary in set " +
-                str(_counter))
+            logger.debug("sorting samples in set "+str(_counter))
             _data = sort_data(
-                _data, to_sort_columns=to_sort_columns,
-                to_sort_rows=to_sort_rows,
-                gene_dict=gene_dict,
+                _data, to_sort_columns=False,
+                to_sort_rows=True,
                 sort_patients_by=sort_patients_by,
                 clinical=clinical)
-            logger.debug("finished sorting data in set "+str(_counter))
+            logger.debug("finished sorting samples in set "+str(_counter))
 
         output_filename = _fname+'_processed'
         save_output(
@@ -169,7 +185,7 @@ def run_pipeline(
         if to_remove_duplicate_columns:
             load_from_file = False
             to_save_output = True
-            _ = remove_andSave_duplicates(
+            newdata, _, _, _ = remove_andSave_duplicates(
                 _data, load_from_file=load_from_file,
                 to_compute_euclidean_distances=to_compute_euclidean_distances,
                 to_save_euclidean_distances=to_save_euclidean_distances,
@@ -179,5 +195,12 @@ def run_pipeline(
             logger.debug(
                 "finished removing duplicate gene profiles in set " +
                 str(_counter))
+
+            # sanity check (TODO: set imputation in case it fails)
+            nan_exist = newdata.isnull().any().any()
+            if nan_exist:
+                logger.error(
+                    'NaN values exist in the newdata!\nNo imputation is set!')
+                raise
 
         _counter += 1

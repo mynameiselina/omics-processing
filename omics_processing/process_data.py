@@ -187,6 +187,12 @@ def transform_data(data, **kwargs):
         transformation_settings['mean'] = data_mean
         transformation_settings['std'] = data_std
 
+    # sanity check (TODO: set imputation in case it fails)
+    nan_exist = data.isnull().any().any()
+    if nan_exist:
+        logger.error('NaN values exist in the data!\nNo imputation is set!')
+        raise
+
     return data, transformation_settings
 
 
@@ -196,14 +202,24 @@ def sort_data(data, **kwargs):
 
     # sort the table columns with the genes position
     if to_sort_columns:
-        gene_dict = kwargs.get('gene_dict', None)
-        if gene_dict is None:
-            logger.error('gene_dict is missing: ' +
+        gene_order = kwargs.get('gene_order', None)
+        # # extract the gene relative order
+        # gene_order = genes_positions_table.set_index(
+        #     gene_id_col).loc[:, 'order'].copy()
+        if gene_order is None:
+            logger.error('gene_order is missing: ' +
                          'genes will not be sorted')
             raise
-
-        data = pd.DataFrame(data, columns=sorted(gene_dict, key=gene_dict.get))
-        logger.info('sort genes by chromosome position with gene_dict')
+        # keep only gene_order with data
+        ids_tmp = set(
+            gene_order.index.values).intersection(set(data.columns.values))
+        # keep only the order of these genes
+        gene_order = gene_order.loc[ids_tmp].copy()
+        gene_order = gene_order.sort_values()
+        # then keep only these genes from the data
+        data = data.loc[:, gene_order.index].copy()
+        logger.info('sorted genes by chromosome position with gene_order')
+        logger.info('data shape: '+str(data.shape))
 
     # sort samples by 'grade_group'
     if to_sort_rows:
@@ -215,7 +231,8 @@ def sort_data(data, **kwargs):
             raise
 
         data, clinical = _sort_patients(data, clinical, sort_patients_by)
-        logger.info('sort patients by: '+str(sort_patients_by))
+        logger.info('sorted patients by: '+str(sort_patients_by))
+        logger.info('data shape: '+str(data.shape))
 
     return data
 

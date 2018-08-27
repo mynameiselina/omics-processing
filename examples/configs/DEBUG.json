@@ -1,7 +1,7 @@
 {
     "filepath":"TCGA_PRAD/input/gistic-cn-processed.tsv",
     "clinical_fpath":"TCGA_PRAD/processed/clinical.txt",
-    "gene_dict_fpath":"TCGA_PRAD/processed/gaf.json",
+    "gaf_fpath":"TCGA_PRAD/processed/gaf.txt",
     "output_directory":"TCGA_PRAD/processed",
     "data_type":"cnv",
     "sample_type":null,
@@ -11,6 +11,8 @@
     "to_arcsinh":false,
     "to_stand":true,
     "to_sort_columns":true,
+    "gene_id_col":"gene",
+    "gene_order_col":"pos_order",
     "to_sort_rows":true,
     "sort_patients_by":"grade_group",
     "to_remove_duplicate_columns":true,
