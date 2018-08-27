@@ -129,7 +129,7 @@ scripts = [
 
 setup(
     name='omics_processing',
-    version='0.1',
+    version='0.2',
     description=(
         'transforming omic data to normality'
     ),
