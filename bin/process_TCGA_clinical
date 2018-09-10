@@ -6,7 +6,7 @@ extract score values
 create grade group column
 save pandas(csv) and dict (json)
 """
-from omics_processing.io import process_clinical_TCGA, join_path
+from omics_processing.io import process_clinical_TCGA, set_path
 import os
 import sys
 import plac
@@ -72,8 +72,8 @@ def main(
     MainDataDir = os.path.join(script_path, '..', 'data')
 
     # make fpaths valid
-    filepath = os.path.join(MainDataDir, join_path(filepath))
-    outdir = os.path.join(MainDataDir, join_path(outdir))
+    filepath = set_path(filepath, parent_dir=MainDataDir, force=False)
+    outdir = set_path(outdir, parent_dir=MainDataDir, force=False)
 
     """ Get GAF file"""
     _ = process_clinical_TCGA(

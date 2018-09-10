@@ -30,7 +30,7 @@ sort samples by 'grade_group'
 # custom imports
 from omics_processing.io import (
     load_gene_order_dict, load_clinical,
-    join_path, fpath_absolute_relative
+    set_fpath
 )
 from omics_processing.process_data import (
     load_data, split_data, clean_samples, clean_genes,
@@ -78,18 +78,16 @@ def run_pipeline(
     output_filename=None
 ):
     # set main data directory
-    MainDataDir = join_path(script_path+'/../../data')
+    MainDataDir = os.path.join(script_path+'/../../data')
 
     # make fpaths valid
     # data input
-    filepath = fpath_absolute_relative(
-        filepath, rootDir=MainDataDir, name="data input")
+    filepath = set_path(filepath, parent_dir=MainDataDir, force=False)
     # gene order table
-    gaf_fpath = fpath_absolute_relative(
-        gaf_fpath, rootDir=MainDataDir, name="gene order table")
+    gaf_fpath = set_path(gaf_fpath, parent_dir=MainDataDir, force=False)
     # clinical info
-    clinical_fpath = fpath_absolute_relative(
-        clinical_fpath, rootDir=MainDataDir, name="clinical info")
+    clinical_fpath = set_path(
+        clinical_fpath, parent_dir=MainDataDir, force=False)
     clinical = load_clinical(
         clinical_fpath,
         **{
@@ -98,8 +96,7 @@ def run_pipeline(
             'index_col': 0
         })
     # output dir
-    output_directory = os.path.join(MainDataDir, join_path(output_directory))
-
+    output_directory = set_path(output_directory, parent_dir=MainDataDir, force=True)
     if output_filename is None:
         output_filename = ''
 

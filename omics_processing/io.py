@@ -240,55 +240,39 @@ def load_clinical(fpath, **read_csv_kwargs):
     return clinical
 
 
-def check_path_integrity(f, rootDir=None, name=None, force=False):
-    if name is None:
-        name = ""
-    if not os.path.exists(f):
-        f = os.path.join(*f.rsplit('/'))
-        if rootDir is not None:
-            if rootDir not in f:
-                f = os.path.join(rootDir, f)
-        if force:
-            f = set_directory(f)
-    if not os.path.exists(f):
-        f = None
-        logger.warning(name+" fpath does not exist!")
+def set_path(f, parent_dir=None, force=False):
+    sep = os.sep
+    # if starts on root, then absolute path
+    # else, relative path
+    start_on_root = False
+    if f.startswith(sep):
+        start_on_root = True
+
+    # split with '/' and join again (os.path.join)
+    f = os.path.join(*f.rsplit(sep))
+    if start_on_root:
+        f = os.path.join(sep, f)
+        f = os.path.abspath(f)
     else:
-        logger.debug("set "+name+" fpath:\n"+f)
+        if parent_dir is not None:
+            parent_dir = os.path.join(*parent_dir.rsplit(sep))
+            f = os.path.join(parent_dir, f)
+
+    # if fpath does not exist
+    if not os.path.exists(f):
+        # if user wants to force it
+        if force:
+            # create it
+            logger.warning(
+                f+" fpath does not exist but it will be created!")
+            f = set_directory(f)
+        else:
+            # else give error
+            logger.error(
+                f+" fpath does not exist!")
+            f = None
 
     return f
-
-
-def join_path(fpath, sep='/'):
-    start_on_root = False
-    if fpath.startswith('/'):
-        start_on_root = True
-    if sep in fpath:
-        fpath = os.path.join(*fpath.rsplit(sep))
-    if start_on_root:
-        fpath = os.path.join('/', fpath)
-
-    return fpath
-
-
-def fpath_absolute_relative(fpath, rootDir=None, name=None):
-    fpath = join_path(fpath)
-    if name is None:
-        name = ""
-    fpath = join_path(fpath)
-    if check_path_integrity(
-            fpath, rootDir=None,
-            name=name+" (absolute path)", force=False) is None:
-        if rootDir is not None:
-            fpath = check_path_integrity(
-                fpath, rootDir=rootDir,
-                name=name+" (relative path)", force=False)
-            if fpath is None:
-                logger.error(name+" invalid fpath! Abort...")
-                raise
-        else:
-            logger.warning(name+" relative root directory is missing!")
-    return fpath
 
 
 def parse_arg_type(arg, type):
