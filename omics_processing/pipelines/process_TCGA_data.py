@@ -78,7 +78,7 @@ def run_pipeline(
     output_filename=None
 ):
     # set main data directory
-    MainDataDir = os.path.join(script_path+'/../../data')
+    MainDataDir = set_path(os.path.join(script_path, '..', '..', 'data'))
 
     # make fpaths valid
     # data input
@@ -96,7 +96,8 @@ def run_pipeline(
             'index_col': 0
         })
     # output dir
-    output_directory = set_path(output_directory, parent_dir=MainDataDir, force=True)
+    output_directory = set_path(
+        output_directory, parent_dir=MainDataDir, force=True)
     if output_filename is None:
         output_filename = ''
 

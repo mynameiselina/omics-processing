@@ -255,7 +255,11 @@ def set_path(f, parent_dir=None, force=False):
         f = os.path.abspath(f)
     else:
         if parent_dir is not None:
+            parent_dir_bak = parent_dir[:]
             parent_dir = os.path.join(*parent_dir.rsplit(sep))
+            if parent_dir_bak.startswith(sep):
+                parent_dir = os.path.join(sep, parent_dir)
+                parent_dir = os.path.abspath(parent_dir)
             f = os.path.join(parent_dir, f)
 
     # if fpath does not exist
