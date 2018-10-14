@@ -8,6 +8,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class HiddenPrints:
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout = self._original_stdout
+
+
 # if folder does not exist, create it
 def set_directory(mydir):
     if not os.path.exists(mydir):
@@ -18,7 +27,7 @@ def set_directory(mydir):
 
 # RUN JUST ONE TIME
 def process_clinical_TCGA(
-        fpath, datadir_out, key_col, **kwargs):
+        fpath, datadir_out, key_col, crop=True, **kwargs):
 
     old_file_format = kwargs.pop('old_file_format', False)
     if old_file_format:
@@ -56,7 +65,9 @@ def process_clinical_TCGA(
         logger.debug(select_columns)
 
     # save some columns and create some new
-    clinical_small = clinical[select_columns].copy()
+    clinical_processed = clinical.copy()
+    if crop:
+        clinical_processed = clinical_processed[select_columns].copy()
 
     if gleason_cols is not None:
         for col in split_gleason_cols:
@@ -68,32 +79,32 @@ def process_clinical_TCGA(
                 gleason_secondary_col = col
 
         # extract score values
-        score = clinical_small[gleason_score_col].astype(float)
-        primary = clinical_small[gleason_primary_col].astype(float)
-        secondary = clinical_small[gleason_secondary_col].astype(float)
+        score = clinical_processed[gleason_score_col].astype(float)
+        primary = clinical_processed[gleason_primary_col].astype(float)
+        secondary = clinical_processed[gleason_secondary_col].astype(float)
 
         # create grade group column
-        clinical_small['grade_group'] = -9999
-        clinical_small.loc[score <= 6, 'grade_group'] = 1
-        clinical_small.loc[(primary == 3) & (secondary == 4),
-                           'grade_group'] = 2
-        clinical_small.loc[(primary == 4) & (secondary == 3),
-                           'grade_group'] = 3
-        clinical_small.loc[score == 8, 'grade_group'] = 4
-        clinical_small.loc[score >= 9, 'grade_group'] = 5
-        _invalid_values = (clinical_small.grade_group == -9999)
+        clinical_processed['grade_group'] = -9999
+        clinical_processed.loc[score <= 6, 'grade_group'] = 1
+        clinical_processed.loc[
+            (primary == 3) & (secondary == 4), 'grade_group'] = 2
+        clinical_processed.loc[
+            (primary == 4) & (secondary == 3), 'grade_group'] = 3
+        clinical_processed.loc[score == 8, 'grade_group'] = 4
+        clinical_processed.loc[score >= 9, 'grade_group'] = 5
+        _invalid_values = (clinical_processed.grade_group == -9999)
         if any(_invalid_values):
             logger.info(
                 'Invalid gleason group values for samples:\n' +
-                clinical_small.index[_invalid_values])
+                clinical_processed.index[_invalid_values])
 
     # save pandas(csv) and dict (json)
     datadir_out = set_directory(datadir_out)
     fpath_out = os.path.join(datadir_out, 'clinical.txt')
-    clinical_small.to_csv(fpath_out, sep='\t')
+    clinical_processed.to_csv(fpath_out, sep='\t')
     logger.info('saved: '+fpath_out)
 
-    return clinical_small
+    return clinical_processed
 
 
 # RUN JUST ONE TIME

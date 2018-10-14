@@ -24,24 +24,29 @@ script_path = os.path.dirname(__file__)
         'option', type=str
     ),
     key_col=plac.Annotation(
-        'Select key column from clinical data table'
+        'Select key column from clinical data table' +
         'this column will be used as index.',
         'option', type=str
     ),
     gleason_cols=plac.Annotation(
-        'Select gleason columns from clinical data table.'
-        'score, primary and secondary pattern'
+        'Select gleason columns from clinical data table.' +
+        'score, primary and secondary pattern' +
         '(in order to create the Gleason grade group)',
         'option', type=str
     ),
     other_cols=plac.Annotation(
-        'Select extra columns from clinical data table.'
+        'Select extra columns from clinical data table.' +
         '(seperate the strings with comma)',
         'option', type=str
     ),
+    crop=plac.Annotation(
+        'Use if you keep only the processed columns, ' +
+        'instead of the whole table.',
+        'flag', 'c'
+    ),
     DEBUG=plac.Annotation(
-        'Set True if you want to DEBUG the code.',
-        'option', 'D', bool
+        'Use if you want to DEBUG the code.',
+        'flag', 'D'
     )
 )
 def main(
@@ -59,7 +64,8 @@ def main(
                  "patient.stage_event.gleason_grading.secondary_pattern",
     outdir="TCGA_PRAD/processed",
     other_cols=None,
-    DEBUG=True
+    crop=False,
+    DEBUG=False
 ):
     if DEBUG:
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -77,7 +83,7 @@ def main(
 
     """ Get GAF file"""
     _ = process_clinical_TCGA(
-        filepath, outdir, key_col, **kwargs)
+        filepath, outdir, key_col, crop=crop, **kwargs)
 
 
 if __name__ == '__main__':

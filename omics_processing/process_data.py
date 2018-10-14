@@ -100,17 +100,22 @@ def clean_genes(data):
     return data
 
 
-def reverse_processing(x, mu, std, data_type='cnv'):
-    logger.info("reverse preprocessing of data to visualize them...")
-    y = x.copy()
-    logger.info(" -reverse stand")
-    y = (y * std) + mu
-    if 'rna' in data_type:
-        logger.info(" -reverse arcsinh with sinh")
-        y = pd.DataFrame(np.sinh(y.values),
-                         index=x.index, columns=x.columns)
+def reverse_processing(x, settings):
+    # works for data that have been only standardized
+    # of first arcsinh and then standardized
+    settings = settings.loc[x.columns, :].copy()
+    if 'stand' in settings.columns.values:
+        if settings['stand'].all():
+            mu = settings['mean'].copy()
+            std = settings['std'].copy()
+            logger.info("reverse standardization of columns")
+            x = (x * std) + mu
 
-    return y
+            if 'arcsinh' in settings.columns.values:
+                if settings['arcsinh'].all():
+                    x = pd.DataFrame(
+                        np.sinh(x.values), index=x.index, columns=x.columns)
+    return x
 
 
 def load_data(data_filename, **kwargs):
