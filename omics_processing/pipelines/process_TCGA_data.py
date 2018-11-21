@@ -197,8 +197,11 @@ def run_pipeline(
             # sanity check (TODO: set imputation in case it fails)
             nan_exist = newdata.isnull().any().any()
             if nan_exist:
-                logger.error(
-                    'NaN values exist in the newdata!\nNo imputation is set!')
-                raise
-
+                nan_sum = newdata.isnull().sum().sum()
+                nan_perc = np.round(100*nan_sum / float(newdata.size), 2)
+                logger.warning(
+                    'NaN values exist in the newdata: ' +
+                    str(nan_perc)+'% is NaN!\n' +
+                    'No imputation method is set, NaN will be set to zero.')
+                newdata = newdata.fillna(0)
         _counter += 1
