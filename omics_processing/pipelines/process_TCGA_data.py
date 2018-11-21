@@ -30,7 +30,7 @@ sort samples by 'grade_group'
 # custom imports
 from omics_processing.io import (
     load_gene_order_dict, load_clinical,
-    set_fpath
+    set_path
 )
 from omics_processing.process_data import (
     load_data, split_data, clean_samples, clean_genes,
