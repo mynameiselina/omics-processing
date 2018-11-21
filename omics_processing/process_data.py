@@ -88,7 +88,7 @@ def clean_genes(data):
     nan_exist = data.isnull().any().any()
     if nan_exist:
         nan_sum = data.isnull().sum().sum()
-        nan_perc = np.round(100*nan_sum / float(data.size), 2)
+        nan_perc = 100*nan_sum / float(data.size)
         logger.warning(
             'NaN values exist in the data: ' +
             str(nan_perc)+'% is NaN!\n' +

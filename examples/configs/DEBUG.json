@@ -1,10 +1,10 @@
 {
-    "filepath":"TCGA_PRAD/input/gistic-cn-processed.tsv",
+    "filepath":"TCGA_PRAD/input/methylation-processed.tsv",
     "clinical_fpath":"TCGA_PRAD/processed/clinical.txt",
     "gaf_fpath":"TCGA_PRAD/processed/gaf.txt",
     "output_directory":"TCGA_PRAD/processed",
-    "data_type":"cnv",
-    "sample_type":null,
+    "data_type":"meth",
+    "sample_type":"tumor",
     "split_train_size":null,
     "split_random_state":null,
     "stratify_patients_by":null,
