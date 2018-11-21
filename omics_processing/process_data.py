@@ -87,8 +87,13 @@ def clean_genes(data):
     # sanity check (TODO: set imputation in case it fails)
     nan_exist = data.isnull().any().any()
     if nan_exist:
-        logger.error('NaN values exist in the data!\nNo imputation is set!')
-        raise
+        nan_sum = data.isnull().sum().sum()
+        nan_perc = np.round(100*nan_sum / float(data.size), 2)
+        logger.warning(
+            'NaN values exist in the data: ' +
+            str(nan_perc)+'% is NaN!\n' +
+            'No imputation method is set, NaN will be set to zero.')
+        data = data.fillna(0)
 
     # drop columns that contain all zeroes
     zero_columns = data.columns.values[np.where(abs(data).sum(axis=0) == 0)[0]]
