@@ -268,3 +268,10 @@ def save_output(data, **kwargs):
         fpath = fpath+'__transformation_settings'
         logger.info('save transformation_settings as csv: '+fpath+'.txt')
         transformation_settings.to_csv(fpath+'.txt', sep='\t')
+
+
+def get_gene_order(gaf, genes, gene_col='gene', order_col='pos_order'):
+    _gene_order = gaf.set_index(gene_col)
+    _gene_order = _gene_order.loc[genes, order_col].copy()
+    _gene_order = _gene_order.sort_values()
+    return _gene_order
