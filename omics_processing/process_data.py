@@ -106,6 +106,7 @@ def clean_genes(data):
 
 
 def reverse_processing(x, settings):
+    x = x.copy()
     # works for data that have been only standardized
     # of first arcsinh and then standardized
     settings = settings.loc[x.columns, :].copy()
@@ -118,6 +119,7 @@ def reverse_processing(x, settings):
 
             if 'arcsinh' in settings.columns.values:
                 if settings['arcsinh'].all():
+                    logger.info("reverse arcsinh of values")
                     x = pd.DataFrame(
                         np.sinh(x.values), index=x.index, columns=x.columns)
     return x
