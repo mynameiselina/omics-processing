@@ -17,7 +17,7 @@ def _sort_patients(data, properties, sort_by=['grade_group']):
     properties_sorted = properties.reindex(data.index)
 
     # sort clinical (in case it was not already sorted)
-    properties_sorted.sort_values(sort_by, ascending=[0], inplace=True)
+    properties_sorted.sort_values(sort_by, ascending=[False], inplace=True)
 
     # now order the data table rows according to clinical order
     # (and drop the ones that do not exist)

@@ -132,7 +132,7 @@ def process_TCGA_gaf(fpath, datadir_out, **read_csv_kwargs):
         gaf_small.loc[:, 'gene']+'_'+gaf_small.loc[:, 'chr']
 
     # sort GAF by gene name - to deal with the duplicates
-    gaf_small.sort_values(['gene_chr'], ascending=[1], inplace=True)
+    gaf_small.sort_values(['gene_chr'], ascending=[True], inplace=True)
 
     # show me all duplicate gene names
     logger.info('all duplicates: ' +
@@ -172,7 +172,8 @@ def process_TCGA_gaf(fpath, datadir_out, **read_csv_kwargs):
 
     # sort GAF by pos (chr and start-end)
 
-    gaf_posMerged.sort_values(['start', 'end'], ascending=[1, 1], inplace=True)
+    gaf_posMerged.sort_values(
+        ['start', 'end'], ascending=[True, True], inplace=True)
     chr_order = index_natsorted(gaf_posMerged.chr.values)
     gaf_posMerged = gaf_posMerged.iloc[chr_order, :].copy()
     gaf_posMerged.reset_index(drop=True, inplace=True)
@@ -272,6 +273,9 @@ def set_path(f, parent_dir=None, force=False):
                 parent_dir = os.path.join(sep, parent_dir)
                 parent_dir = os.path.abspath(parent_dir)
             f = os.path.join(parent_dir, f)
+        else:
+            f = os.path.join('./', f)
+            f = os.path.abspath(f)
 
     # if fpath does not exist
     if not os.path.exists(f):
