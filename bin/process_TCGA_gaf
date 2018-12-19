@@ -6,7 +6,8 @@ create a column with the correct position order
 create ans save dictionary of gene names and their order
 create ans save dictionary of gene names and their chr
 """
-from omics_processing.io import process_TCGA_gaf, set_path
+from omics_processing.process_data import process_TCGA_gaf
+from omics_processing.io import set_path
 import os
 import sys
 import plac

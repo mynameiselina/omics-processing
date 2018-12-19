@@ -6,7 +6,8 @@ extract score values
 create grade group column
 save pandas(csv) and dict (json)
 """
-from omics_processing.io import process_clinical_TCGA, set_path
+from omics_processing.process_data import process_clinical_TCGA
+from omics_processing.io import set_path
 import os
 import sys
 import plac
