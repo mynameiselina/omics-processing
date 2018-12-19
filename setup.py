@@ -121,7 +121,6 @@ class develop(_develop):
 
 
 scripts = [
-    'bin/debug_pipeline',
     'bin/process_TCGA_gaf',
     'bin/process_TCGA_clinical',
     'bin/process_TCGA_data'
@@ -129,7 +128,7 @@ scripts = [
 
 setup(
     name='omics_processing',
-    version='0.2',
+    version='1.0',
     description=(
         'transforming omic data to normality'
     ),
