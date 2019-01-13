@@ -47,3 +47,6 @@ The commands have been created to process the default files from TCGA and will n
 The config file should set the parameters to process TCGA data, examples can be found in the examples/configs directory.
 Optionally all these parameters could also be set from command line. If the same parameter has been set in command line and in the config file then the one from the command line will be chosen.
 The -D option is to set the debug mode on and have a more verbose printout.
+
+# License
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
