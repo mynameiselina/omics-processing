@@ -133,7 +133,6 @@ setup(
         'transforming omic data to normality'
     ),
     long_description=open('README.md').read(),
-    url='https://github.ibm.com/LLE/omics_processing',
     author='Elina Koletou',
     author_email='lle@zurich.ibm.com',
     packages=find_packages('.'),
